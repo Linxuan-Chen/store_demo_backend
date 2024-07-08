@@ -42,8 +42,8 @@ class Customer(models.Model):
         max_length=1, choices=MEMBERSHIP_OPTIONS, default=MEMBERSHIP_BRONZE_NAME)
 
     # Type annotation
-    customerdetails_id: Manager['CustomerDetails']
-    address: Manager['Address']
+    customerdetails_set: Manager['CustomerDetails']
+    address_set: Manager['Address']
 
 
 class CustomerDetails(models.Model):
@@ -58,13 +58,26 @@ class Address(models.Model):
     city = models.CharField(max_length=255)
     zip = models.CharField(max_length=255)
     customer = models.ManyToManyField(
-        Customer, blank=True, related_name='address')
+        Customer, blank=True)
 
 
 class Order(models.Model):
+    PAYMENT_STATUS_COMPLETE = 'C'
+    PAYMENT_STATUS_FAIL = 'F'
+    PAYMENT_STATUS_PENDING = 'P'
+
+    PAYMENT_STATUS_OPTIONS = [
+        (PAYMENT_STATUS_COMPLETE, 'Complete'),
+        (PAYMENT_STATUS_FAIL, 'Failed'),
+        (PAYMENT_STATUS_PENDING, 'Pending'),
+    ]
+
     customer = models.ForeignKey(
         Customer, on_delete=models.SET_NULL, null=True)
-    address = models.ForeignKey(Address, on_delete=models.PROTECT)
+    address = models.ForeignKey(Address, on_delete=models.PROTECT, null=True)
+    payment_status = models.CharField(
+        max_length=1, choices=PAYMENT_STATUS_OPTIONS, default=PAYMENT_STATUS_PENDING)
+    created_at = models.DateTimeField(auto_now_add=True)
 
 
 class OrderItem(models.Model):
