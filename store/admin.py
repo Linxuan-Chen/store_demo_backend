@@ -1,13 +1,16 @@
 from typing import Any
 from django.contrib import admin
+from django.urls import reverse
 from django.db.models import Count
 from django.db.models.query import QuerySet
+from django.utils.html import format_html
+from django.utils.http import urlencode
 from django.http import HttpRequest
 from store import models
 
 
 class ProductInventoryLevelFilter(admin.SimpleListFilter):
-    """This custom class filters product by inventory level
+    """This class filters product by inventory level
 
         Inventory levels: 
         Low - inventory < low_threshold
@@ -46,12 +49,14 @@ class ProductInventoryLevelFilter(admin.SimpleListFilter):
 class CollectionAdmin(admin.ModelAdmin):
     """Custom admin configuration for Collection model
 
-    This class specifies the admin pannel displays title and product_count column.
+    This class specifies how Collection model is displayed
     """
     list_display = ['title', 'product_count']
 
-    def product_count(self, collection):
-        return collection.product_count
+    def product_count(self, collection: models.Collection):
+        url = reverse('admin:store_product_changelist') + \
+            '?' + urlencode({'collection_id': collection.id})
+        return format_html('<a href={}>{}</a>', url, collection.product_count)
 
     def get_queryset(self, request: HttpRequest) -> QuerySet[Any]:
         """Return a queryset annotated with 'product_count' to display the number of products 
@@ -72,10 +77,19 @@ class ProductAdmin(admin.ModelAdmin):
     list_display = ['title', 'inventory', 'unit_price', 'collection_title']
     list_editable = ['unit_price', 'inventory',]
     list_select_related = ['collection']
-    ordering = ['title', 'unit_price']
+    ordering = ['title', 'unit_price', 'inventory']
     search_fields = ['title', 'unit_price']
     list_per_page = 10
     list_filter = [ProductInventoryLevelFilter]
+    prepopulated_fields = {'slug': ('title',)}
 
     def collection_title(self, product: models.Product):
         return product.collection.title
+
+
+@admin.register(models.Customer)
+class CustomerAdmin(admin.ModelAdmin):
+    list_display = ['full_name', 'membership']
+
+    def full_name(self, customer: models.Customer):
+        return f'{customer.first_name} {customer.last_name}'

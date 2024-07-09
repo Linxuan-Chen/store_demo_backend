@@ -20,7 +20,7 @@ class Promotions(models.Model):
 class Product(models.Model):
     collection = models.ForeignKey(Collection, on_delete=models.CASCADE)
     title = models.CharField(max_length=255)
-    slug = models.SlugField(default='-')
+    slug = models.SlugField(null=True)
     description = models.TextField()
     inventory = models.IntegerField()
     promotions = models.ManyToManyField(Promotions, blank=True)
