@@ -12,7 +12,7 @@ class Collection(models.Model):
         return self.title
 
 
-class Promotions(models.Model):
+class Promotion(models.Model):
     title = models.CharField(max_length=255)
     discount = models.DecimalField(max_digits=6, decimal_places=2)
 
@@ -23,7 +23,7 @@ class Product(models.Model):
     slug = models.SlugField(null=True)
     description = models.TextField()
     inventory = models.IntegerField()
-    promotions = models.ManyToManyField(Promotions, blank=True)
+    promotions = models.ManyToManyField(Promotion, blank=True)
     unit_price = models.DecimalField(max_digits=6, decimal_places=2)
     last_updated = models.DateTimeField(auto_now=True)
 
@@ -35,10 +35,11 @@ class Address(models.Model):
 
     def __str__(self) -> str:
         return f'{self.street}, {self.city} {self.zip}'
-    
+
     class Meta:
         verbose_name = 'Address'
         verbose_name_plural = 'Addresses'
+
 
 class Customer(models.Model):
     MEMBERSHIP_BRONZE_NAME = 'B'
