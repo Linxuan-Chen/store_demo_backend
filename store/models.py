@@ -28,6 +28,18 @@ class Product(models.Model):
     last_updated = models.DateTimeField(auto_now=True)
 
 
+class Address(models.Model):
+    street = models.CharField(max_length=255)
+    city = models.CharField(max_length=255)
+    zip = models.CharField(max_length=255)
+
+    def __str__(self) -> str:
+        return f'{self.street}, {self.city} {self.zip}'
+    
+    class Meta:
+        verbose_name = 'Address'
+        verbose_name_plural = 'Addresses'
+
 class Customer(models.Model):
     MEMBERSHIP_BRONZE_NAME = 'B'
     MEMBERSHIP_SILVER_NAME = 'S'
@@ -44,9 +56,7 @@ class Customer(models.Model):
     membership = models.CharField(
         max_length=1, choices=MEMBERSHIP_OPTIONS, default=MEMBERSHIP_BRONZE_NAME)
 
-    # Type annotation
-    customerdetails_set: Manager['CustomerDetails']
-    address_set: Manager['Address']
+    addresses = models.ManyToManyField(Address, blank=True)
 
 
 class CustomerDetails(models.Model):
@@ -54,14 +64,6 @@ class CustomerDetails(models.Model):
     email = models.EmailField()
     phone = models.CharField(max_length=255)
     birth_date = models.DateField(null=True)
-
-
-class Address(models.Model):
-    street = models.CharField(max_length=255)
-    city = models.CharField(max_length=255)
-    zip = models.CharField(max_length=255)
-    customer = models.ManyToManyField(
-        Customer, blank=True)
 
 
 class Order(models.Model):

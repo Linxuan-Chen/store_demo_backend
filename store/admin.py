@@ -7,6 +7,7 @@ from django.utils.html import format_html
 from django.utils.http import urlencode
 from django.http import HttpRequest
 from store import models
+from django import forms
 
 
 class ProductInventoryLevelFilter(admin.SimpleListFilter):
@@ -87,9 +88,32 @@ class ProductAdmin(admin.ModelAdmin):
         return product.collection.title
 
 
+@admin.register(models.Address)
+class AddressAdmin(admin.ModelAdmin):
+    """Custom admin configurations for address
+
+        This class specifies how customer model is displayed
+    """
+    list_display = ['street', 'city', 'zip']
+    search_fields = ['street', 'city', 'zip']
+
+
 @admin.register(models.Customer)
 class CustomerAdmin(admin.ModelAdmin):
-    list_display = ['full_name', 'membership']
+    """This class specifies how customer model is displayed
+
+        New addresses can be added and mapped on the page
+    """
+    list_display = ['full_name', 'membership', 'customer_address']
+    list_filter = ['membership']
+    ordering = ['id']
+    autocomplete_fields = ['addresses']
+
+    def get_queryset(self, request: HttpRequest) -> QuerySet[Any]:
+        return super().get_queryset(request).prefetch_related('addresses')
 
     def full_name(self, customer: models.Customer):
         return f'{customer.first_name} {customer.last_name}'
+
+    def customer_address(self, customer: models.Customer):
+        return [address for address in customer.addresses.all()]
