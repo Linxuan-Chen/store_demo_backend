@@ -27,6 +27,9 @@ class Product(models.Model):
     unit_price = models.DecimalField(max_digits=6, decimal_places=2)
     last_updated = models.DateTimeField(auto_now=True)
 
+    def __str__(self):
+        return self.title
+
 
 class Address(models.Model):
     street = models.CharField(max_length=255)
@@ -58,6 +61,11 @@ class Customer(models.Model):
         max_length=1, choices=MEMBERSHIP_OPTIONS, default=MEMBERSHIP_BRONZE_NAME)
 
     addresses = models.ManyToManyField(Address, blank=True)
+    # Type annotations
+    customerdetails: models.Manager['CustomerDetails']
+
+    def __str__(self) -> str:
+        return f'{self.first_name} {self.last_name}'
 
 
 class CustomerDetails(models.Model):
@@ -65,6 +73,10 @@ class CustomerDetails(models.Model):
     email = models.EmailField()
     phone = models.CharField(max_length=255)
     birth_date = models.DateField(null=True)
+
+    class Meta:
+        verbose_name = 'Customer Detail'
+        verbose_name_plural = 'Customer Details'
 
 
 class Order(models.Model):
@@ -84,6 +96,12 @@ class Order(models.Model):
     payment_status = models.CharField(
         max_length=1, choices=PAYMENT_STATUS_OPTIONS, default=PAYMENT_STATUS_PENDING)
     created_at = models.DateTimeField(auto_now_add=True)
+    
+    #Type annotations
+    orderitem_set: Manager['OrderItem']
+
+    def __str__(self) -> str:
+        return f'{self.customer} at {self.created_at}'
 
 
 class OrderItem(models.Model):
@@ -96,13 +114,24 @@ class OrderItem(models.Model):
 class Cart(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid4)
     created_at = models.DateTimeField(auto_now_add=True)
-    cart_id: Manager['CartItem']
+    #Type annotation
+    cartitem_set: Manager['CartItem']
+
+    def __str__(self):
+        return str(self.id)
 
 
 class CartItem(models.Model):
     cart = models.ForeignKey(Cart, on_delete=models.CASCADE, null=True)
     product = models.ForeignKey(Product, on_delete=models.CASCADE, null=True)
     quantity = models.IntegerField()
+
+    class Meta:
+        verbose_name = 'Cart Item'
+        verbose_name_plural = 'Cart Items'
+    
+    def __str__(self):
+        return self.product.title
 
 
 class Review(models.Model):
