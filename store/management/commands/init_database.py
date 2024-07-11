@@ -3,6 +3,10 @@ from django.db import connection, DatabaseError, transaction
 
 
 class Command(BaseCommand):
+    """A custom command to populate fake data to init the database
+
+        This command populates fake data to the database with specific data structure
+    """
     help = 'init database using sql statements'
 
     def handle(self, *args, **options):
