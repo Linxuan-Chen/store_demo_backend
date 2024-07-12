@@ -7,7 +7,6 @@ from django.utils.html import format_html
 from django.utils.http import urlencode
 from django.http import HttpRequest
 from store import models
-from django import forms
 
 
 @admin.register(models.Collection)
@@ -17,6 +16,7 @@ class CollectionAdmin(admin.ModelAdmin):
     This class specifies how Collection model is displayed
     """
     list_display = ['title', 'product_count']
+    autocomplete_fields = ['featured_product']
 
     def product_count(self, collection: models.Collection):
         url = reverse('admin:store_product_changelist') + \

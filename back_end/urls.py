@@ -20,13 +20,13 @@ from . import settings
 from django.views.generic import TemplateView
 
 api_urlpatterns = [
-    path('store', include('store.urls'))
+    path('store/', include('store.urls'))
 ]
 
 urlpatterns = [
-    path('', TemplateView.as_view(template_name='index.html')),
+    path('api/', include(api_urlpatterns)),
     path('admin/', admin.site.urls),
-    # path('api', include(api_urlpatterns))
+    path('', TemplateView.as_view(template_name='index.html')),
 ]
 
 if not settings.TESTING:

@@ -5,4 +5,8 @@ from . import views
 
 router = DefaultRouter()
 
-# router.register('carts', )
+router.register('collections', views.CollectionViewSet)
+
+urlpatterns = [
+    path('', include(router.urls)),
+]
