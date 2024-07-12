@@ -1,6 +1,7 @@
 {
-  "editor.detectIndentation": false,
-  "editor.guides.indentation": false,
-  "vetur.format.options.tabSize": 4,
-  "editor.tabSize": 4
+    "editor.detectIndentation": false,
+    "editor.guides.indentation": false,
+    "vetur.format.options.tabSize": 4,
+    "editor.tabSize": 4,
+    "python.analysis.typeCheckingMode": "basic"
 }

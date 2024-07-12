@@ -35,3 +35,10 @@ class CollectionModifySerializer(serializers.ModelSerializer):
     class Meta:
         model = Collection
         fields = ['title']
+
+
+class ProductSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Product
+        fields = ['id', 'collection', 'title', 'slug',
+                  'description', 'inventory', 'promotions', 'unit_price']

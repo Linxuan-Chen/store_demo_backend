@@ -1,9 +1,16 @@
 from django.db import models
 from django.db.models import Manager
 from uuid import uuid4
+from django.core.validators import MinValueValidator
+from django.utils.text import slugify
 
 
 class Collection(models.Model):
+    """Collection Model
+
+        title: <str> name of the collection
+        featured_product: List<Product> products that belong to the collection
+    """
     title = models.CharField(max_length=255)
     featured_product = models.ForeignKey(
         'Product', on_delete=models.SET_NULL, null=True, related_name='+')
@@ -18,17 +25,29 @@ class Promotion(models.Model):
 
 
 class Product(models.Model):
-    collection = models.ForeignKey(Collection, on_delete=models.CASCADE)
+    collection = models.ForeignKey(
+        Collection, on_delete=models.CASCADE, null=True, blank=True, default=None)
     title = models.CharField(max_length=255)
-    slug = models.SlugField(null=True)
-    description = models.TextField()
-    inventory = models.IntegerField()
-    promotions = models.ManyToManyField(Promotion, blank=True)
-    unit_price = models.DecimalField(max_digits=6, decimal_places=2)
+    slug = models.SlugField(null=True, default=None)
+    description = models.TextField(null=False, blank=True, default='')
+    inventory = models.IntegerField(
+        validators=[MinValueValidator(0)], default=0)
+    promotions = models.ManyToManyField(
+        Promotion, blank=True, default=None)
+    unit_price = models.DecimalField(
+        max_digits=6, decimal_places=2, validators=[MinValueValidator(0)], null=False, blank=False)
     last_updated = models.DateTimeField(auto_now=True)
+
+    def save(self, *args, **kwargs) -> None:
+        if self.title:
+            self.slug = slugify(self.title)
+        return super().save(*args, **kwargs)
 
     def __str__(self):
         return self.title
+
+    class Meta:
+        ordering = ['title']
 
 
 class Address(models.Model):
@@ -96,8 +115,8 @@ class Order(models.Model):
     payment_status = models.CharField(
         max_length=1, choices=PAYMENT_STATUS_OPTIONS, default=PAYMENT_STATUS_PENDING)
     created_at = models.DateTimeField(auto_now_add=True)
-    
-    #Type annotations
+
+    # Type annotations
     orderitem_set: Manager['OrderItem']
 
     def __str__(self) -> str:
@@ -112,9 +131,15 @@ class OrderItem(models.Model):
 
 
 class Cart(models.Model):
+    """Cart Model
+
+        id: <UUID> a uuid of the cart
+        created_at: <datetime> datetime that the record was created at
+        cartitem_set: <Manager['CartItem']> reverse relationship created by cart item model
+    """
     id = models.UUIDField(primary_key=True, default=uuid4)
     created_at = models.DateTimeField(auto_now_add=True)
-    #Type annotation
+    # Type annotation
     cartitem_set: Manager['CartItem']
 
     def __str__(self):
@@ -122,16 +147,24 @@ class Cart(models.Model):
 
 
 class CartItem(models.Model):
+    """Cart Item Model
+
+        cart_id: <int> cart id
+        product_id: <ForeignKey[Product | None]> product id
+        quantity: <int> item quantity
+    """
     cart = models.ForeignKey(Cart, on_delete=models.CASCADE, null=True)
     product = models.ForeignKey(Product, on_delete=models.CASCADE, null=True)
-    quantity = models.IntegerField()
+    quantity = models.IntegerField(validators=[MinValueValidator(1)])
 
     class Meta:
         verbose_name = 'Cart Item'
         verbose_name_plural = 'Cart Items'
-    
+
     def __str__(self):
-        return self.product.title
+        if self.product:
+            return self.product.title
+        return None
 
 
 class Review(models.Model):
