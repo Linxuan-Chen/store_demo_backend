@@ -3,6 +3,7 @@ from django.db.models import Manager
 from uuid import uuid4
 from django.core.validators import MinValueValidator
 from django.utils.text import slugify
+from decimal import Decimal
 
 
 class Collection(models.Model):
@@ -31,11 +32,11 @@ class Product(models.Model):
     slug = models.SlugField(null=True, default=None)
     description = models.TextField(null=False, blank=True, default='')
     inventory = models.IntegerField(
-        validators=[MinValueValidator(0)], default=0)
+        validators=[MinValueValidator(Decimal('0'))], default=0)
     promotions = models.ManyToManyField(
         Promotion, blank=True, default=None)
     unit_price = models.DecimalField(
-        max_digits=6, decimal_places=2, validators=[MinValueValidator(0)], null=False, blank=False)
+        max_digits=6, decimal_places=2, validators=[MinValueValidator(Decimal('0'))], null=False, blank=False)
     last_updated = models.DateTimeField(auto_now=True)
 
     def save(self, *args, **kwargs) -> None:
@@ -155,11 +156,13 @@ class CartItem(models.Model):
     """
     cart = models.ForeignKey(Cart, on_delete=models.CASCADE, null=True)
     product = models.ForeignKey(Product, on_delete=models.CASCADE, null=True)
-    quantity = models.IntegerField(validators=[MinValueValidator(1)])
+    quantity = models.IntegerField(validators=[MinValueValidator(Decimal('0'))])
 
     class Meta:
         verbose_name = 'Cart Item'
         verbose_name_plural = 'Cart Items'
+        unique_together = [('cart', 'product')]
+
 
     def __str__(self):
         if self.product:
