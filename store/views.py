@@ -54,6 +54,15 @@ class CartItemViewSet(ModelViewSet):
             return Response(status=status.HTTP_204_NO_CONTENT)
         return Response("item_ids is required", status=status.HTTP_400_BAD_REQUEST)
 
+    @action(detail=False, methods=['get'])
+    def count(self, request: Request, *args, **kwargs):
+        try:
+            cart = Cart.objects.get(id=self.kwargs['cart_pk'])
+            count = cart.cartitem_set.count()
+            return Response({ 'count': count }, status=status.HTTP_200_OK)
+        except Cart.DoesNotExist:
+            return Response("Cart not found", status=status.HTTP_404_NOT_FOUND)
+
     def partial_update(self, request: Request, *args: Any, **kwargs: Any) -> Response:
         instance = self.get_object()
         patch_serializer = self.get_serializer(
