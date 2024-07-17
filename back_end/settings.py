@@ -169,3 +169,9 @@ CORS_ALLOWED_ORIGINS = [
 SIMPLE_JWT = {
     'AUTH_HEADER_TYPES': ('JWT',),
 }
+
+DJOSER = {
+    'SERIALIZERS': {
+        'user_create': 'back_end.serializers.UserCreateSerializer'
+    }
+}
