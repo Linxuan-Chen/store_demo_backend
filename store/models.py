@@ -4,6 +4,7 @@ from uuid import uuid4
 from django.core.validators import MinValueValidator
 from django.utils.text import slugify
 from decimal import Decimal
+from django.conf import settings
 
 
 class Collection(models.Model):
@@ -81,15 +82,16 @@ class Customer(models.Model):
         max_length=1, choices=MEMBERSHIP_OPTIONS, default=MEMBERSHIP_BRONZE_NAME)
 
     addresses = models.ManyToManyField(Address, blank=True)
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True)
     # Type annotations
-    customerdetails: models.Manager['CustomerDetails']
+    customer_details: models.Manager['CustomerDetails']
 
     def __str__(self) -> str:
         return f'{self.first_name} {self.last_name}'
 
 
 class CustomerDetails(models.Model):
-    customer_id = models.OneToOneField(Customer, on_delete=models.CASCADE)
+    customer = models.OneToOneField(Customer, on_delete=models.CASCADE, related_name='customer_details')
     email = models.EmailField()
     phone = models.CharField(max_length=255)
     birth_date = models.DateField(null=True)

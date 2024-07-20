@@ -1,5 +1,7 @@
 from rest_framework import serializers
-from .models import Product, Collection, Cart, CartItem
+from django.db.transaction import atomic
+from .models import Product, Collection, Cart, CartItem, Customer, CustomerDetails, Address
+from django.contrib.auth.models import User
 
 
 class SimpleProductSerializer(serializers.ModelSerializer):
@@ -107,3 +109,83 @@ class UpdateCartItemSerializer(serializers.ModelSerializer):
     class Meta:
         model = CartItem
         fields = ['quantity']
+
+
+class AddressSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Address
+        fields = ['id', 'street', 'city', 'zip']
+
+
+class CustomerDetailsSerialzier(serializers.ModelSerializer):
+
+    class Meta:
+        model = CustomerDetails
+        fields = ['id', 'email', 'phone', 'birth_date']
+
+
+class CustomerSerializer(serializers.ModelSerializer):
+    addresses = serializers.SerializerMethodField(method_name='get_addresses')
+    customer_details = CustomerDetailsSerialzier()
+    user_id = serializers.IntegerField(read_only=True)
+    id = serializers.IntegerField(read_only=True)
+
+    def get_addresses(self, customer: Customer):
+        return AddressSerializer(customer.addresses, many=True).data
+
+    class Meta:
+        model = Customer
+        fields = ['id', 'first_name', 'last_name',
+                  'membership', 'customer_details', 'addresses', 'user_id']
+
+
+class UserSerializer(serializers.ModelSerializer):
+    # username = serializers.CharField(write_only=True)
+    # password = serializers.CharField(write_only=True)
+
+    class Meta:
+        model = User
+        fields = ['username', 'password']
+
+
+class UpdateCustomerSerializer(serializers.ModelSerializer):
+    customer_details = CustomerDetailsSerialzier()
+    id = serializers.IntegerField(read_only=True)
+    user = UserSerializer(source='user_id', write_only=True)
+
+    class Meta:
+        model = Customer
+        fields = ['id', 'first_name', 'last_name',
+                  'membership', 'customer_details', 'user']
+        
+    def create(self, validated_data):
+        customer_details = validated_data.pop('customer_details')
+        user_info = validated_data.pop('user_id')
+
+        with atomic():
+            User.objects.create_user(
+                username=user_info.get('username'), password=user_info.get('password'), email=customer_details.get('email'))
+
+            customer = Customer.objects.create(
+                first_name=validated_data.get('first_name'), last_name=validated_data.get('last_name'), membership=validated_data.get('membership'))
+            CustomerDetails.objects.create(
+                customer=customer, **customer_details)
+
+            return customer
+
+    def update(self, instance, validated_data):
+        customer_details_data = validated_data.get('customer_details')
+
+        instance.first_name = validated_data.get('first_name')
+        instance.last_name = validated_data.get('last_name')
+        instance.membership = validated_data.get('membership')
+        instance.save()
+
+        customer_details = instance.customer_details
+        customer_details.email = customer_details_data.get('email')
+        customer_details.phone = customer_details_data.get('phone')
+
+        customer_details.save()
+
+        return instance

@@ -18,6 +18,7 @@ from django.contrib import admin
 from django.urls import path, include
 from . import settings
 from django.views.generic import TemplateView
+from djoser.views import TokenCreateView
 
 api_urlpatterns = [
     path('store/', include('store.urls'))
@@ -26,6 +27,7 @@ api_urlpatterns = [
 urlpatterns = [
     path('api/', include(api_urlpatterns)),
     path('admin/', admin.site.urls),
+    path('login/', TokenCreateView.as_view(), name='login'),
     path('auth/', include('djoser.urls')),
     path('auth/', include('djoser.urls.jwt')),
     path('', TemplateView.as_view(template_name='index.html')),

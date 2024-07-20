@@ -1,19 +1,21 @@
+from collections.abc import Sequence
 from typing import Any
 from django.db.models.query import QuerySet
+from rest_framework import status, permissions
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.serializers import BaseSerializer
 from rest_framework.viewsets import ModelViewSet, GenericViewSet
-from rest_framework.mixins import CreateModelMixin, RetrieveModelMixin, DestroyModelMixin
-from rest_framework import status
+from rest_framework.mixins import CreateModelMixin, RetrieveModelMixin, DestroyModelMixin, UpdateModelMixin
 from rest_framework.decorators import action
 from django_filters.rest_framework import DjangoFilterBackend
 from .filters import CollectionFilter, ProductFilter
 from .paginations import ProductPagination
-from .models import Collection, Product, Cart, CartItem
+from .permissions import IsAdminOrAuthenticated
+from .models import Collection, Product, Cart, CartItem, Customer
 from .serializers import CollectionRetrieveSerializer, \
     CollectionModifySerializer, ProductSerializer, CartSerializer, CartItemSerializer, \
-    AddCartItemSerializer, UpdateCartItemSerializer
+    AddCartItemSerializer, UpdateCartItemSerializer, CustomerSerializer, UpdateCustomerSerializer
 
 
 class CollectionViewSet(ModelViewSet):
@@ -35,6 +37,7 @@ class ProductViewSet(ModelViewSet):
     pagination_class = ProductPagination
     filter_backends = [DjangoFilterBackend]
     filterset_class = ProductFilter
+    permission_classes = [IsAdminOrAuthenticated]
 
 
 class CartViewSet(CreateModelMixin, RetrieveModelMixin, DestroyModelMixin, GenericViewSet):
@@ -59,7 +62,7 @@ class CartItemViewSet(ModelViewSet):
         try:
             cart = Cart.objects.get(id=self.kwargs['cart_pk'])
             count = cart.cartitem_set.count()
-            return Response({ 'count': count }, status=status.HTTP_200_OK)
+            return Response({'count': count}, status=status.HTTP_200_OK)
         except Cart.DoesNotExist:
             return Response("Cart not found", status=status.HTTP_404_NOT_FOUND)
 
@@ -89,3 +92,30 @@ class CartItemViewSet(ModelViewSet):
         context = super().get_serializer_context()
         context['cart_id'] = self.kwargs['cart_pk']
         return context
+
+
+class CustomerView(RetrieveModelMixin, CreateModelMixin, UpdateModelMixin, DestroyModelMixin, GenericViewSet):
+    queryset = Customer.objects.prefetch_related(
+        'addresses').select_related('customer_details').all()
+
+    @action(detail=False, methods=['get', 'patch'])
+    def current_user(self, request):
+        (customer, created) = Customer.objects.get_or_create(
+            user_id=request.user.id)
+        if request.method == 'PATCH':
+            customer_serializer = UpdateCustomerSerializer(
+                customer, data=request.data)
+            customer_serializer.is_valid(raise_exception=True)
+            customer_serializer.save()
+            return Response(customer_serializer.data)
+        return Response(CustomerSerializer(customer).data)
+
+    def get_serializer_class(self):
+        if self.request.method == 'POST' or self.request.method == 'PATCH':
+            return UpdateCustomerSerializer
+        return CustomerSerializer
+
+    def get_permissions(self):
+        if self.request.method == 'POST':
+            return [permissions.AllowAny()]
+        return [permissions.IsAuthenticated()]

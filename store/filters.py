@@ -1,5 +1,5 @@
 from django_filters.rest_framework import FilterSet
-from .models import Collection, Product
+from .models import Collection, Product, Customer
 import django_filters
 
 
@@ -29,3 +29,4 @@ class ProductFilter(FilterSet):
     class Meta:
         model = Product
         fields = ['title', 'description']
+
