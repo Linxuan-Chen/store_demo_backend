@@ -1,7 +1,6 @@
 from rest_framework import serializers
 from django.db.transaction import atomic
 from .models import Product, Collection, Cart, CartItem, Customer, CustomerDetails, Address
-from django.contrib.auth.models import User
 
 
 class SimpleProductSerializer(serializers.ModelSerializer):
@@ -140,38 +139,23 @@ class CustomerSerializer(serializers.ModelSerializer):
                   'membership', 'customer_details', 'addresses', 'user_id']
 
 
-class UserSerializer(serializers.ModelSerializer):
-    # username = serializers.CharField(write_only=True)
-    # password = serializers.CharField(write_only=True)
-
-    class Meta:
-        model = User
-        fields = ['username', 'password']
-
-
 class UpdateCustomerSerializer(serializers.ModelSerializer):
     customer_details = CustomerDetailsSerialzier()
     id = serializers.IntegerField(read_only=True)
-    user = UserSerializer(source='user_id', write_only=True)
 
     class Meta:
         model = Customer
         fields = ['id', 'first_name', 'last_name',
-                  'membership', 'customer_details', 'user']
-        
+                  'membership', 'customer_details']
+
     def create(self, validated_data):
         customer_details = validated_data.pop('customer_details')
-        user_info = validated_data.pop('user_id')
 
         with atomic():
-            User.objects.create_user(
-                username=user_info.get('username'), password=user_info.get('password'), email=customer_details.get('email'))
-
             customer = Customer.objects.create(
                 first_name=validated_data.get('first_name'), last_name=validated_data.get('last_name'), membership=validated_data.get('membership'))
             CustomerDetails.objects.create(
                 customer=customer, **customer_details)
-
             return customer
 
     def update(self, instance, validated_data):

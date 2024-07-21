@@ -65,6 +65,22 @@ class Address(models.Model):
         verbose_name_plural = 'Addresses'
 
 
+class Cart(models.Model):
+    """Cart Model
+
+        id: <UUID> a uuid of the cart
+        created_at: <datetime> datetime that the record was created at
+        cartitem_set: <Manager['CartItem']> reverse relationship created by cart item model
+    """
+    id = models.UUIDField(primary_key=True, default=uuid4)
+    created_at = models.DateTimeField(auto_now_add=True)
+    # Type annotation
+    cartitem_set: Manager['CartItem']
+
+    def __str__(self):
+        return str(self.id)
+
+
 class Customer(models.Model):
     MEMBERSHIP_BRONZE_NAME = 'B'
     MEMBERSHIP_SILVER_NAME = 'S'
@@ -82,7 +98,9 @@ class Customer(models.Model):
         max_length=1, choices=MEMBERSHIP_OPTIONS, default=MEMBERSHIP_BRONZE_NAME)
 
     addresses = models.ManyToManyField(Address, blank=True)
-    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True)
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True)
+    cart = models.OneToOneField(Cart, on_delete=models.CASCADE, null=True)
     # Type annotations
     customer_details: models.Manager['CustomerDetails']
 
@@ -91,7 +109,8 @@ class Customer(models.Model):
 
 
 class CustomerDetails(models.Model):
-    customer = models.OneToOneField(Customer, on_delete=models.CASCADE, related_name='customer_details')
+    customer = models.OneToOneField(
+        Customer, on_delete=models.CASCADE, related_name='customer_details')
     email = models.EmailField()
     phone = models.CharField(max_length=255)
     birth_date = models.DateField(null=True)
@@ -133,22 +152,6 @@ class OrderItem(models.Model):
     quantity = models.IntegerField()
 
 
-class Cart(models.Model):
-    """Cart Model
-
-        id: <UUID> a uuid of the cart
-        created_at: <datetime> datetime that the record was created at
-        cartitem_set: <Manager['CartItem']> reverse relationship created by cart item model
-    """
-    id = models.UUIDField(primary_key=True, default=uuid4)
-    created_at = models.DateTimeField(auto_now_add=True)
-    # Type annotation
-    cartitem_set: Manager['CartItem']
-
-    def __str__(self):
-        return str(self.id)
-
-
 class CartItem(models.Model):
     """Cart Item Model
 
@@ -158,13 +161,13 @@ class CartItem(models.Model):
     """
     cart = models.ForeignKey(Cart, on_delete=models.CASCADE, null=True)
     product = models.ForeignKey(Product, on_delete=models.CASCADE, null=True)
-    quantity = models.IntegerField(validators=[MinValueValidator(Decimal('0'))])
+    quantity = models.IntegerField(
+        validators=[MinValueValidator(Decimal('0'))])
 
     class Meta:
         verbose_name = 'Cart Item'
         verbose_name_plural = 'Cart Items'
         unique_together = [('cart', 'product')]
-
 
     def __str__(self):
         if self.product:

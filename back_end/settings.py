@@ -44,7 +44,8 @@ INSTALLED_APPS = [
     'rest_framework',
     'djoser',
     'django_filters',
-    'store'
+    'store',
+    'account',
 ]
 
 MIDDLEWARE = [
@@ -159,23 +160,41 @@ if not TESTING:
 REST_FRAMEWORK = {
     'COERCE_DECIMAL_TO_STRING': False,
     'DEFAULT_AUTHENTICATION_CLASSES': (
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
+        'back_end.authentication.CustomJWTAuthentication',
     ),
 }
+
+CORS_ALLOW_CREDENTIALS = True
 
 CORS_ALLOWED_ORIGINS = [
     'http://localhost:3000',
 ]
 
 SIMPLE_JWT = {
-    'AUTH_HEADER_TYPES': ('JWT',),
-    "ACCESS_TOKEN_LIFETIME": timedelta(days=1),
-    "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=5),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
+    'TOKEN_OBTAIN_SERIALIZER': 'account.serializers.TokenObtainSerializer',
+    # Cookie name. Enables cookies if value is set.
+    'AUTH_COOKIE': 'access',
+    # A string like "example.com", or None for standard domain cookie.
+    'AUTH_COOKIE_DOMAIN': None,
+    # Whether the auth cookies should be secure (https:// only).
+    'AUTH_COOKIE_SECURE': False,
+    # Http only cookie flag.It's not fetch by javascript.
+    'AUTH_COOKIE_HTTP_ONLY': True,
+    'AUTH_COOKIE_PATH': '/',        # The path of the auth cookie.
+    'AUTH_COOKIE_SAMESITE': 'Lax',
 }
 
 DJOSER = {
     'SERIALIZERS': {
-        'user_create': 'back_end.serializers.UserCreateSerializer',
-        'current_user': 'back_end.serializers.UserSerializer',
+        'user_create': 'account.serializers.UserCreateSerializer',
+        'current_user': 'account.serializers.UserSerializer',
     }
 }
+# Cookies secure settings
+SECURE_SSL_REDIRECT = False
+CSRF_COOKIE_SECURE = True
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_HTTPONLY = True
+SESSION_COOKIE_HTTPONLY = True

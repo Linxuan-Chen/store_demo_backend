@@ -1,5 +1,5 @@
-from collections.abc import Sequence
 from typing import Any
+from django.shortcuts import get_object_or_404
 from django.db.models.query import QuerySet
 from rest_framework import status, permissions
 from rest_framework.request import Request
@@ -97,6 +97,11 @@ class CartItemViewSet(ModelViewSet):
 class CustomerView(RetrieveModelMixin, CreateModelMixin, UpdateModelMixin, DestroyModelMixin, GenericViewSet):
     queryset = Customer.objects.prefetch_related(
         'addresses').select_related('customer_details').all()
+
+    @action(detail=False, methods=['get'])
+    def current_cart(self, request):
+        customer = get_object_or_404(Customer, user_id=request.user.id)
+        return Response({'cart_id': customer.cart})
 
     @action(detail=False, methods=['get', 'patch'])
     def current_user(self, request):
