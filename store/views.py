@@ -59,12 +59,16 @@ class CartItemViewSet(ModelViewSet):
 
     @action(detail=False, methods=['get'])
     def count(self, request: Request, *args, **kwargs):
-        try:
-            cart = Cart.objects.get(id=self.kwargs['cart_pk'])
-            count = cart.cartitem_set.count()
-            return Response({'count': count}, status=status.HTTP_200_OK)
-        except Cart.DoesNotExist:
-            return Response("Cart not found", status=status.HTTP_404_NOT_FOUND)
+        cart_pk = self.kwargs['cart_pk']
+        if cart_pk:
+            try:
+                cart = Cart.objects.get(id=self.kwargs['cart_pk'])
+                count = cart.cartitem_set.count()
+                return Response({'count': count}, status=status.HTTP_200_OK)
+            except Cart.DoesNotExist:
+                return Response("Cart not found", status=status.HTTP_404_NOT_FOUND)
+        else:
+            return Response("no data", status=status.HTTP_404_NOT_FOUND)
 
     def partial_update(self, request: Request, *args: Any, **kwargs: Any) -> Response:
         instance = self.get_object()
