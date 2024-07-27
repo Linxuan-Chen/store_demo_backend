@@ -71,11 +71,11 @@ class AddCartItemSerializer(serializers.ModelSerializer):
 
 
 class CartItemSerializer(serializers.ModelSerializer):
-    products = serializers.SerializerMethodField(method_name='get_products')
+    product = serializers.SerializerMethodField(method_name='get_product')
     total_price = serializers.SerializerMethodField(
         method_name='calc_total_price')
 
-    def get_products(self, cart_item: CartItem):
+    def get_product(self, cart_item: CartItem):
         return SimpleProductSerializer(cart_item.product).data
 
     def calc_total_price(self, cart_item: CartItem):
@@ -83,7 +83,7 @@ class CartItemSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = CartItem
-        fields = ['id', 'quantity', 'products', 'total_price']
+        fields = ['id', 'quantity', 'product', 'total_price']
 
 
 class CartSerializer(serializers.ModelSerializer):

@@ -6,6 +6,9 @@ from rest_framework.exceptions import ValidationError
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.settings import api_settings
+from django.contrib.auth.models import User
+from django.db import transaction
+from store.models import Customer
 
 
 class UserCreateSerializer(BaseUserCreateSerializer):
@@ -69,3 +72,29 @@ class MergeAnonymousCartSerializer(serializers.Serializer):
 
     def validate(self, attrs):
         return attrs
+
+
+class SignUpSerializer(serializers.ModelSerializer):
+    repeat_password = serializers.CharField(write_only=True)
+    password = serializers.CharField(write_only=True)
+
+    def validate_repeat_password(self, value):
+        data = self.get_initial()
+        password = data.get('password')
+        if value != password:
+            raise serializers.ValidationError(
+                'repeat password is not the same as password')
+        return value
+
+    def create(self, validated_data):
+        validated_data.pop('repeat_password')
+        with transaction.atomic():
+            user = User.objects.create_user(**validated_data)
+            Customer.objects.create(user_id=user.pk,
+                                    first_name=user.first_name, last_name=user.last_name)
+        return user
+
+    class Meta:
+        model = User
+        fields = ['username', 'password', 'repeat_password',
+                  'first_name', 'last_name', 'email']

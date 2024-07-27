@@ -1,18 +1,20 @@
-from rest_framework.request import Request
 from django.shortcuts import get_object_or_404
+from django.contrib.auth.models import User
+from django.db.transaction import atomic
+from rest_framework import status
+from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework.viewsets import GenericViewSet
+from rest_framework.mixins import CreateModelMixin
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from rest_framework_simplejwt.tokens import RefreshToken
 from datetime import timedelta
 from store.models import Customer, Cart, CartItem
-from rest_framework.permissions import IsAuthenticated, AllowAny
-from datetime import timedelta
-from .constants import THIRTY_DAYS_IN_SECONDS, FIVE_MINS_IN_SECONDS, ONE_DAY_IN_SECONDS
-from rest_framework import status
 from utils.createApiResponseMessage import createApiResponseMessage
-from django.db.transaction import atomic
-from .serializers import MergeAnonymousCartSerializer
+from .constants import THIRTY_DAYS_IN_SECONDS, FIVE_MINS_IN_SECONDS, ONE_DAY_IN_SECONDS
+from .serializers import MergeAnonymousCartSerializer, SignUpSerializer
 
 # Create your views here.
 
@@ -28,7 +30,7 @@ class TokenObtainPairCookieView(TokenObtainPairView):
         access: access token
         refresh: refresh token
 
-    Permissions: [any]
+    Permissions: [AllowAny]
     """
     permission_classes = [AllowAny]
 
@@ -60,7 +62,7 @@ class TokenRefreshCookieView(TokenRefreshView):
 
     Returns:
        access: access token
-    Permissions: [any]
+    Permissions: [AllowAny]
 
     """
 
@@ -75,6 +77,14 @@ class TokenRefreshCookieView(TokenRefreshView):
 
 
 class mergeAnonymousCartView(APIView):
+    """Merge anonymous shopping cart to customer shopping cart
+
+    This class merges anonymous shopping cart to customer shopping cart to keep the customer shopping cart updated.
+
+    Returns:
+        cart id of customer shopping cart
+    Permissions: [IsAuthenticated]
+    """
     permission_classes = [IsAuthenticated]
 
     def _merge_cart_items(self, source_cart_id, target_cart) -> str:
@@ -160,13 +170,14 @@ class CheckUserStatusView(APIView):
         user_id = request.user.id  # type: ignore
         customer = get_object_or_404(Customer, user_id=user_id)
         cart_id = customer.cart.id if customer.cart else None
-        return Response({'cart_id': cart_id, 'first_name': customer.first_name})
+        return Response({'cart_id': cart_id, 'first_name': customer.first_name, 'is_logged_in': request.user.is_authenticated})
 
 
 class LogOutView(APIView):
     """Log Out with cookies
 
-
+    This class clears JWT cookies
+    Permissions: [AllowAny]
     """
     permission_classes = [IsAuthenticated]
 
@@ -177,3 +188,23 @@ class LogOutView(APIView):
         response.delete_cookie('access')
         response.delete_cookie('refresh')
         return response
+
+
+class SignUpViewSet(CreateModelMixin, GenericViewSet):
+    queryset = User.objects.all()
+    serializer_class = SignUpSerializer
+
+
+class IsUsernameOccupied(APIView):
+    permission_classes = [AllowAny]
+
+    def _createUsernameMessage(self, is_available: bool, message: str):
+        return Response({'is_available': is_available, 'message': message})
+
+    def get(self, request, *args, **kwargs):
+        query_username = request.query_params.get('username')
+        if query_username is None:
+            return Response(createApiResponseMessage('username is required'), status=status.HTTP_400_BAD_REQUEST)
+        username = User.objects.filter(username__iexact=query_username)
+        msg = 'Username is already taken.' if username.exists() else 'Username is available.'
+        return self._createUsernameMessage(is_available=not username.exists(), message=msg)
