@@ -3,6 +3,7 @@ from django.contrib.auth.models import User
 from django.db.transaction import atomic
 from rest_framework import status
 from rest_framework.request import Request
+from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import GenericViewSet
@@ -12,7 +13,6 @@ from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from rest_framework_simplejwt.tokens import RefreshToken
 from datetime import timedelta
 from store.models import Customer, Cart, CartItem
-from utils.createApiResponseMessage import createApiResponseMessage
 from .constants import THIRTY_DAYS_IN_SECONDS, FIVE_MINS_IN_SECONDS, ONE_DAY_IN_SECONDS
 from .serializers import MergeAnonymousCartSerializer, SignUpSerializer
 
@@ -182,8 +182,7 @@ class LogOutView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, *args, **kwargs):
-        msg = createApiResponseMessage('User successfully logged out')
-        response = Response(msg, status=status.HTTP_204_NO_CONTENT)
+        response = Response(status=status.HTTP_204_NO_CONTENT)
 
         response.delete_cookie('access')
         response.delete_cookie('refresh')
@@ -204,7 +203,7 @@ class IsUsernameOccupied(APIView):
     def get(self, request, *args, **kwargs):
         query_username = request.query_params.get('username')
         if query_username is None:
-            return Response(createApiResponseMessage('username is required'), status=status.HTTP_400_BAD_REQUEST)
+            raise ValidationError('username is required')
         username = User.objects.filter(username__iexact=query_username)
         msg = 'Username is already taken.' if username.exists() else 'Username is available.'
         return self._createUsernameMessage(is_available=not username.exists(), message=msg)

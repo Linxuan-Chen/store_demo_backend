@@ -1,11 +1,11 @@
 from rest_framework import serializers
+from rest_framework.exceptions import ValidationError
 from django.db.transaction import atomic
-from .models import Product, Collection, Cart, CartItem, Customer, CustomerDetails, Address
+from .models import Product, Collection, Cart, CartItem, Customer, CustomerDetails, Address, Order, OrderItem
 
 
 class SimpleProductSerializer(serializers.ModelSerializer):
     """A simple product serializer
-
         The serializer only displays basic meta data of a product
     """
     class Meta:
@@ -173,3 +173,69 @@ class UpdateCustomerSerializer(serializers.ModelSerializer):
         customer_details.save()
 
         return instance
+
+
+class SimpleOrderItemSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = OrderItem
+        fields = ['id', 'product_title', 'quantity', 'unit_price']
+
+
+class OrderSerializer(serializers.ModelSerializer):
+    items = serializers.SerializerMethodField(method_name='get_items')
+
+    def get_items(self, order: Order):
+        order_items = order.orderitem_set
+        order_items_serializer = SimpleOrderItemSerializer(
+            order_items, many=True)
+        return order_items_serializer.data
+
+    class Meta:
+        model = Order
+        fields = ['id', 'customer', 'created_at', 'payment_status', 'items']
+
+
+class CreateOrderSerializer(serializers.Serializer):
+    cart_id = serializers.UUIDField()
+    address_id = serializers.IntegerField()
+
+    def validate_cart_id(self, cart_id):
+        if not Cart.objects.filter(pk=cart_id).exists():
+            raise ValidationError('No cart matches the given cart id')
+        if CartItem.objects.filter(cart=cart_id).count() == 0:
+            raise ValidationError('The cart is empty')
+        return cart_id
+
+    def validate_address_id(self, address_id):
+        user_id = self.context['user_id']
+        customer = Customer.objects.get(user_id=user_id)
+        if not Address.objects.filter(customer=customer, id=address_id).exists():
+            raise ValidationError(
+                'Address with the given id does not belong to current customer')
+        return address_id
+
+    def save(self, **kwargs):
+        cart_id = self.validated_data['cart_id']
+        address_id = self.validated_data['address_id']
+        user_id = self.context['user_id']
+
+        with atomic():
+            cart_items = CartItem.objects.select_related(
+                'product').filter(cart_id=cart_id)
+            customer = Customer.objects.get(user_id=user_id)
+            address = customer.addresses.get(id=address_id)
+
+            order = Order.objects.create(customer=customer, address=address)
+
+            order_items = [OrderItem(order=order, product_title=item.product.title,
+                                     unit_price=item.product.unit_price, quantity=item.quantity) for item in cart_items]
+            OrderItem.objects.bulk_create(order_items)
+        return order
+
+
+class UpdateOrderSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Order
+        fields = ['payment_status']

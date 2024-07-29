@@ -57,6 +57,9 @@ class Address(models.Model):
     city = models.CharField(max_length=255)
     zip = models.CharField(max_length=255)
 
+    # Type annotation
+    customer = Manager['Customer']
+
     def __str__(self) -> str:
         return f'{self.street}, {self.city} {self.zip}'
 
@@ -160,7 +163,7 @@ class CartItem(models.Model):
         quantity: <int> item quantity
     """
     cart = models.ForeignKey(Cart, on_delete=models.CASCADE, null=True)
-    product = models.ForeignKey(Product, on_delete=models.CASCADE, null=True)
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
     quantity = models.IntegerField(
         validators=[MinValueValidator(Decimal('0'))])
 

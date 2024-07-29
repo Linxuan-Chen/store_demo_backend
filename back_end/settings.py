@@ -163,7 +163,7 @@ REST_FRAMEWORK = {
 }
 
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=5),
+    'ACCESS_TOKEN_LIFETIME': timedelta(days=1),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
     'TOKEN_OBTAIN_SERIALIZER': 'account.serializers.TokenObtainSerializer',
     'TOKEN_REFRESH_SERIALIZER': 'account.serializers.TokenRefreshWithCookieSerializer',
@@ -182,7 +182,7 @@ SIMPLE_JWT = {
 DJOSER = {
     'SERIALIZERS': {
         'user_create': 'account.serializers.UserCreateSerializer',
-        'current_user': 'account.serializers.UserSerializer',
+        'current_user': 'account.serializers.CurrentUserSerializer',
     }
 }
 # Cookies secure settings
