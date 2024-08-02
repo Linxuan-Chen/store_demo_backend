@@ -90,8 +90,6 @@ class SignUpSerializer(serializers.ModelSerializer):
         validated_data.pop('repeat_password')
         with transaction.atomic():
             user = User.objects.create_user(**validated_data)
-            Customer.objects.create(user_id=user.pk,
-                                    first_name=user.first_name, last_name=user.last_name)
         return user
 
     class Meta:

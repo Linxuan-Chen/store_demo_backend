@@ -99,15 +99,22 @@ class mergeAnonymousCartView(APIView):
         Returns:
             str: uuid of merged cart
         """
+        target_cart_id = target_cart.pk
         source_cart = Cart.objects.get(id=source_cart_id)
         source_cart_items = CartItem.objects.filter(cart_id=source_cart_id)
         with atomic():
             for item in source_cart_items:
-                item.cart = target_cart
-                item.save()
-            source_cart_items.all().delete()
+                if CartItem.objects.filter(product_id=item.product.pk, cart_id=target_cart_id).exists():
+                    customer_cart_item = CartItem.objects.get(
+                        product_id=item.product, cart_id=target_cart_id)
+                    customer_cart_item.quantity += item.quantity
+                    customer_cart_item.save()
+                    item.delete()
+                else:
+                    item.cart = target_cart
+                    item.save()
             source_cart.delete()
-        return target_cart.id
+        return target_cart_id
 
     def post(self, request, *args, **kwargs):
         merge_serializer = MergeAnonymousCartSerializer(data=request.data)
@@ -120,7 +127,7 @@ class mergeAnonymousCartView(APIView):
         data_copy = request.data.copy()
 
         if request.user.is_authenticated:
-            customer = Customer.objects.get(user_id=request.user)
+            customer = Customer.objects.get(user_id=request.user.pk)
             if customer.cart is None:
                 # if customer cart is null and anonymous_cart is null, create a new one and bind it to the customer
                 if anonymous_cart_id is None:
