@@ -134,23 +134,27 @@ class mergeAnonymousCartView(APIView):
                     cart = Cart.objects.create()
                     customer.cart = cart
                     customer.save()
-                    data_copy['anonymous_cart_id'] = str(cart.id)
+                    new_anonymous_cart_id = Cart.objects.create().pk
+                    data_copy['anonymous_cart_id'] = new_anonymous_cart_id
                 # if customer cart is null and anonymous_cart is not null, bind the anonymous_cart to the customer
                 else:
                     customer.cart = Cart.objects.get(id=anonymous_cart_id)
                     customer.save()
-                    data_copy['anonymous_cart_id'] = str(anonymous_cart_id)
+                    new_anonymous_cart_id = Cart.objects.create().pk
+                    data_copy['anonymous_cart_id'] = new_anonymous_cart_id
             else:
                 # if customer cart is not null and anonymous_cart is null, return customer cart
                 if anonymous_cart_id is None:
-                    data_copy['anonymous_carid'] = str(customer.cart.id)
+                    new_anonymous_cart_id = Cart.objects.create().pk
+                    data_copy['anonymous_cart_id'] = new_anonymous_cart_id
                 # if customer cart is not null and anonymous_cart is not null:
                 # 1. merge anonymous cart to customer cart
                 # 2. delete the anonymous cart and items
                 else:
                     merged_cart_id = self._merge_cart_items(
                         source_cart_id=anonymous_cart_id, target_cart=customer.cart)
-                    data_copy['anonymous_cart_id'] = str(merged_cart_id)
+                    new_anonymous_cart_id = Cart.objects.create().pk
+                    data_copy['anonymous_cart_id'] = new_anonymous_cart_id
 
         updated_serializer = MergeAnonymousCartSerializer(data=data_copy)
 

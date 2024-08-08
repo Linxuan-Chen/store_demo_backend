@@ -142,11 +142,12 @@ class CustomerSerializer(serializers.ModelSerializer):
 class UpdateCustomerSerializer(serializers.ModelSerializer):
     customer_details = CustomerDetailsSerialzier()
     id = serializers.IntegerField(read_only=True)
+    address = AddressSerializer(write_only=True)
 
     class Meta:
         model = Customer
         fields = ['id', 'first_name', 'last_name',
-                  'membership', 'customer_details']
+                  'membership', 'customer_details', 'address']
 
     def create(self, validated_data):
         customer_details = validated_data.pop('customer_details')
@@ -160,17 +161,32 @@ class UpdateCustomerSerializer(serializers.ModelSerializer):
 
     def update(self, instance, validated_data):
         customer_details_data = validated_data.get('customer_details')
+        with atomic():
+            instance.first_name = validated_data.get(
+                'first_name', instance.first_name)
+            instance.last_name = validated_data.get(
+                'last_name', instance.last_name)
+            instance.membership = validated_data.get(
+                'membership', instance.membership)
+            address_data = validated_data.get('address')
+            if address_data:
+                street = address_data.get('street', None)
+                city = address_data.get('city', None)
+                zip = address_data.get('zip', None)
+                (address, created) = Address.objects.get_or_create(
+                    street=street, city=city, zip=zip)
+                instance.addresses.add(address)
+            instance.save()
+            try:
+                customer_details = instance.customer_details
+                customer_details.email = customer_details_data.get(
+                    'email', customer_details.email)
+                customer_details.phone = customer_details_data.get(
+                    'phone', customer_details.phone)
 
-        instance.first_name = validated_data.get('first_name')
-        instance.last_name = validated_data.get('last_name')
-        instance.membership = validated_data.get('membership')
-        instance.save()
-
-        customer_details = instance.customer_details
-        customer_details.email = customer_details_data.get('email')
-        customer_details.phone = customer_details_data.get('phone')
-
-        customer_details.save()
+                customer_details.save()
+            except:
+                pass
 
         return instance
 
@@ -240,3 +256,5 @@ class UpdateOrderSerializer(serializers.ModelSerializer):
     class Meta:
         model = Order
         fields = ['payment_status']
+
+

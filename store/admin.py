@@ -20,7 +20,7 @@ class CollectionAdmin(admin.ModelAdmin):
 
     def product_count(self, collection: models.Collection):
         url = reverse('admin:store_product_changelist') + \
-            '?' + urlencode({'collection_id': collection.id})
+            '?' + urlencode({'collection_id': collection.pk})
         return format_html('<a href={}>{}</a>', url, collection.product_count)
 
     def get_queryset(self, request: HttpRequest) -> QuerySet[Any]:
@@ -85,7 +85,7 @@ class ProductAdmin(admin.ModelAdmin):
     prepopulated_fields = {'slug': ('title',)}
 
     def collection_title(self, product: models.Product):
-        return product.collection.title
+        return product.collection.title if product.collection else ''
 
 
 @admin.register(models.Address)
@@ -109,7 +109,7 @@ class CustomerAdmin(admin.ModelAdmin):
     list_filter = ['membership']
     ordering = ['id']
     autocomplete_fields = ['addresses']
-    list_select_related = ['customerdetails']
+    list_select_related = ['customer_details']
     search_fields = ['first_name', 'last_name',
                      'addresses__street', 'addresses__city']
 
@@ -123,11 +123,11 @@ class CustomerAdmin(admin.ModelAdmin):
         return [address for address in customer.addresses.all()]
 
     def customer_details(self, customer: models.Customer):
-        url = reverse('admin:store_customerdetails_changelist') + '?' + urlencode({
-            'id': customer.customerdetails.id
+        url = reverse('admin:store_customer_details_changelist') + '?' + urlencode({
+            'id': customer.customer_details
         })
 
-        return format_html('<a href={}>{}</a>', url, customer.customerdetails.id)
+        return format_html('<a href={}>{}</a>', url, customer.customer_details)
 
 
 @admin.register(models.Promotion)
@@ -164,7 +164,7 @@ class OrderAdmin(admin.ModelAdmin):
 
     def order_items(self, order: models.Order):
         url = reverse('admin:store_orderitem_changelist') + '?' + urlencode({
-            'order_id': order.id
+            'order_id': order.pk
         })
 
         return format_html('<a href={}>{}</a>', url, order.orderitem_set.count())

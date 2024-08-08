@@ -1,23 +1,23 @@
 from typing import Any
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, get_list_or_404
 from django.db.models.query import QuerySet
 from rest_framework import status
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.serializers import BaseSerializer
 from rest_framework.viewsets import ModelViewSet, GenericViewSet
-from rest_framework.mixins import CreateModelMixin, RetrieveModelMixin, DestroyModelMixin, UpdateModelMixin
+from rest_framework.mixins import CreateModelMixin, RetrieveModelMixin, DestroyModelMixin, UpdateModelMixin, ListModelMixin
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated, IsAdminUser, AllowAny
 from django_filters.rest_framework import DjangoFilterBackend
 from .filters import CollectionFilter, ProductFilter
 from .paginations import ProductPagination
 from .permissions import IsAdminOrAuthenticated
-from .models import Collection, Product, Cart, CartItem, Customer, Order
+from .models import Collection, Product, Cart, CartItem, Customer, Order, Address
 from .serializers import CollectionRetrieveSerializer, \
     CollectionModifySerializer, ProductSerializer, CartSerializer, CartItemSerializer, \
     AddCartItemSerializer, UpdateCartItemSerializer, CustomerSerializer, UpdateCustomerSerializer, \
-    OrderSerializer, CreateOrderSerializer, UpdateOrderSerializer
+    OrderSerializer, CreateOrderSerializer, UpdateOrderSerializer, AddressSerializer
 
 
 class CollectionViewSet(ModelViewSet):
@@ -101,6 +101,7 @@ class CartItemViewSet(ModelViewSet):
 
 
 class CustomerView(RetrieveModelMixin, CreateModelMixin, UpdateModelMixin, DestroyModelMixin, GenericViewSet):
+    http_method_names = ['get', 'patch', 'post', 'delete']
     queryset = Customer.objects.prefetch_related(
         'addresses').select_related('customer_details').all()
 
@@ -164,3 +165,17 @@ class OrderViewSet(ModelViewSet):
         elif method == 'PATCH':
             return UpdateOrderSerializer
         return OrderSerializer
+
+
+class AddressViewSet(ModelViewSet):
+    serializer_class = AddressSerializer
+    permission_classes = [IsAuthenticated]
+    http_method_names = ['get', 'patch', 'delete']
+
+    def get_queryset(self) -> QuerySet:
+        customer = get_object_or_404(Customer, user_id=self.request.user.pk)
+        addresses = Address.objects.all().filter(customer=customer)
+        return addresses
+
+    def get_serializer_context(self) -> dict[str, Any]:
+        return {'user_id': self.request.user.pk}

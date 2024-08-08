@@ -53,9 +53,9 @@ class Product(models.Model):
 
 
 class Address(models.Model):
-    street = models.CharField(max_length=255)
-    city = models.CharField(max_length=255)
-    zip = models.CharField(max_length=255)
+    street = models.CharField(max_length=255, null=True)
+    city = models.CharField(max_length=255, null=True)
+    zip = models.CharField(max_length=255, null=True)
 
     # Type annotation
     customer = Manager['Customer']
@@ -103,7 +103,7 @@ class Customer(models.Model):
     addresses = models.ManyToManyField(Address, blank=True)
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True)
-    cart = models.OneToOneField(Cart, on_delete=models.CASCADE, null=True)
+    cart = models.OneToOneField(Cart, on_delete=models.SET_NULL, null=True)
     # Type annotations
     customer_details: models.Manager['CustomerDetails']
 
