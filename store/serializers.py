@@ -140,9 +140,11 @@ class CustomerSerializer(serializers.ModelSerializer):
 
 
 class UpdateCustomerSerializer(serializers.ModelSerializer):
-    customer_details = CustomerDetailsSerialzier()
+    customer_details = CustomerDetailsSerialzier(
+        allow_null=True, required=False)
     id = serializers.IntegerField(read_only=True)
-    address = AddressSerializer(write_only=True)
+    address = AddressSerializer(
+        write_only=True, allow_null=True, required=False)
 
     class Meta:
         model = Customer
@@ -159,8 +161,50 @@ class UpdateCustomerSerializer(serializers.ModelSerializer):
                 customer=customer, **customer_details)
             return customer
 
+    # def update(self, instance, validated_data):
+    #     customer_details_data = validated_data.get('customer_details')
+    #     with atomic():
+    #         instance.first_name = validated_data.get(
+    #             'first_name', instance.first_name)
+    #         instance.last_name = validated_data.get(
+    #             'last_name', instance.last_name)
+    #         instance.membership = validated_data.get(
+    #             'membership', instance.membership)
+    #         address_data = validated_data.get('address')
+    #         if address_data:
+    #             street = address_data.get('street', None)
+    #             city = address_data.get('city', None)
+    #             zip = address_data.get('zip', None)
+    #             (address, created) = Address.objects.get_or_create(
+    #                 street=street, city=city, zip=zip)
+    #             instance.addresses.add(address)
+    #         instance.save()
+    #         if customer_details_data:
+    #             try:
+    #                 customer_details = instance.customer_details
+    #                 customer_details.email = customer_details_data.get(
+    #                     'email', customer_details.email)
+    #                 customer_details.phone = customer_details_data.get(
+    #                     'phone', customer_details.phone)
+    #                 customer_details.birth_date = customer_details_data.get(
+    #                     'birth_date', customer_details.birth_date)
+    #                 customer_details.save()
+    #             except:
+    #                 new_email = customer_details_data.get(
+    #                     'email', customer_details.email)
+    #                 new_phone = customer_details_data.get(
+    #                     'phone', customer_details.phone)
+    #                 new_birth_date = customer_details_data.get(
+    #                     'birth_date', customer_details.birth_date)
+    #                 details = CustomerDetails.objects.create(
+    #                     email=new_email, phone=new_phone, birth_date=new_birth_date)
+    #                 instance.customer_details = details
+    #                 instance.save()
+    #     return instance
+
     def update(self, instance, validated_data):
         customer_details_data = validated_data.get('customer_details')
+
         with atomic():
             instance.first_name = validated_data.get(
                 'first_name', instance.first_name)
@@ -168,25 +212,39 @@ class UpdateCustomerSerializer(serializers.ModelSerializer):
                 'last_name', instance.last_name)
             instance.membership = validated_data.get(
                 'membership', instance.membership)
+
             address_data = validated_data.get('address')
             if address_data:
                 street = address_data.get('street', None)
                 city = address_data.get('city', None)
-                zip = address_data.get('zip', None)
-                (address, created) = Address.objects.get_or_create(
-                    street=street, city=city, zip=zip)
+                # 避免与 Python 内置的 `zip` 冲突
+                zip_code = address_data.get('zip', None)
+                address, created = Address.objects.get_or_create(
+                    street=street, city=city, zip=zip_code
+                )
                 instance.addresses.add(address)
-            instance.save()
-            try:
-                customer_details = instance.customer_details
-                customer_details.email = customer_details_data.get(
-                    'email', customer_details.email)
-                customer_details.phone = customer_details_data.get(
-                    'phone', customer_details.phone)
 
-                customer_details.save()
-            except:
-                pass
+            instance.save()
+
+            if customer_details_data:
+                if hasattr(instance, 'customer_details'):
+                    customer_details = instance.customer_details
+                    customer_details.email = customer_details_data.get(
+                        'email', customer_details.email)
+                    customer_details.phone = customer_details_data.get(
+                        'phone', customer_details.phone)
+                    customer_details.birth_date = customer_details_data.get(
+                        'birth_date', customer_details.birth_date)
+                    customer_details.save()
+                else:
+                    new_email = customer_details_data.get('email', None)
+                    new_phone = customer_details_data.get('phone', None)
+                    new_birth_date = customer_details_data.get(
+                        'birth_date', None)
+                    CustomerDetails.objects.create(
+                        email=new_email, phone=new_phone, birth_date=new_birth_date, customer=instance
+                    )
+                    instance.save()
 
         return instance
 
@@ -200,6 +258,10 @@ class SimpleOrderItemSerializer(serializers.ModelSerializer):
 
 class OrderSerializer(serializers.ModelSerializer):
     items = serializers.SerializerMethodField(method_name='get_items')
+    customer = serializers.SerializerMethodField(
+        method_name='get_customer_name')
+    total_price = serializers.SerializerMethodField(
+        method_name='get_total_price')
 
     def get_items(self, order: Order):
         order_items = order.orderitem_set
@@ -207,9 +269,20 @@ class OrderSerializer(serializers.ModelSerializer):
             order_items, many=True)
         return order_items_serializer.data
 
+    def get_customer_name(self, order: Order):
+        customer_name = f'{order.customer.first_name if order.customer else ''} {
+            order.customer.last_name if order.customer else ''}'
+        return customer_name
+
+    def get_total_price(self, order: Order):
+        total_price = sum([item.quantity *
+                           item.unit_price for item in order.orderitem_set.all()])
+        return total_price
+
     class Meta:
         model = Order
-        fields = ['id', 'customer', 'created_at', 'payment_status', 'items']
+        fields = ['id', 'customer', 'created_at',
+                  'payment_status', 'items', 'total_price']
 
 
 class CreateOrderSerializer(serializers.Serializer):
@@ -256,5 +329,3 @@ class UpdateOrderSerializer(serializers.ModelSerializer):
     class Meta:
         model = Order
         fields = ['payment_status']
-
-

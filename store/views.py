@@ -6,12 +6,12 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.serializers import BaseSerializer
 from rest_framework.viewsets import ModelViewSet, GenericViewSet
-from rest_framework.mixins import CreateModelMixin, RetrieveModelMixin, DestroyModelMixin, UpdateModelMixin, ListModelMixin
+from rest_framework.mixins import CreateModelMixin, RetrieveModelMixin, DestroyModelMixin, UpdateModelMixin
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated, IsAdminUser, AllowAny
 from django_filters.rest_framework import DjangoFilterBackend
 from .filters import CollectionFilter, ProductFilter
-from .paginations import ProductPagination
+from .paginations import ProductPagination, OrderPagination
 from .permissions import IsAdminOrAuthenticated
 from .models import Collection, Product, Cart, CartItem, Customer, Order, Address
 from .serializers import CollectionRetrieveSerializer, \
@@ -136,6 +136,7 @@ class CustomerView(RetrieveModelMixin, CreateModelMixin, UpdateModelMixin, Destr
 class OrderViewSet(ModelViewSet):
     queryset = Order.objects.prefetch_related('orderitem_set').all()
     http_method_names = ['get', 'post', 'patch', 'delete', 'head', 'options']
+    pagination_class = OrderPagination
 
     def create(self, request: Request, *args: Any, **kwargs: Any) -> Response:
         order_serializer = CreateOrderSerializer(

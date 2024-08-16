@@ -95,8 +95,8 @@ class Customer(models.Model):
         (MEMBERSHIP_GOLD_NAME, 'Gold'),
     ]
 
-    first_name = models.CharField(max_length=255)
-    last_name = models.CharField(max_length=255)
+    first_name = models.CharField(max_length=255, null=True)
+    last_name = models.CharField(max_length=255, null=True)
     membership = models.CharField(
         max_length=1, choices=MEMBERSHIP_OPTIONS, default=MEMBERSHIP_BRONZE_NAME)
 
@@ -114,8 +114,8 @@ class Customer(models.Model):
 class CustomerDetails(models.Model):
     customer = models.OneToOneField(
         Customer, on_delete=models.CASCADE, related_name='customer_details')
-    email = models.EmailField()
-    phone = models.CharField(max_length=255)
+    email = models.EmailField(null=True)
+    phone = models.CharField(max_length=255, null=True)
     birth_date = models.DateField(null=True)
 
     class Meta:
