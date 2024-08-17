@@ -158,9 +158,9 @@ class OrderAdmin(admin.ModelAdmin):
                     'payment_status', 'created_at', 'order_items',]
     list_filter = ['payment_status']
     search_fields = ['customer__first_name',
-                     'customer__first_name', 'address__street', 'address__city', 'created_at']
-    list_select_related = ['customer', 'address']
-    autocomplete_fields = ['customer', 'address']
+                     'customer__first_name', 'address', 'created_at']
+    list_select_related = ['customer']
+    autocomplete_fields = ['customer']
 
     def order_items(self, order: models.Order):
         url = reverse('admin:store_orderitem_changelist') + '?' + urlencode({

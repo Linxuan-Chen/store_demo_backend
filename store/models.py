@@ -56,6 +56,7 @@ class Address(models.Model):
     street = models.CharField(max_length=255, null=True)
     city = models.CharField(max_length=255, null=True)
     zip = models.CharField(max_length=255, null=True)
+    is_default = models.BooleanField(default=False)
 
     # Type annotation
     customer = Manager['Customer']
@@ -136,7 +137,7 @@ class Order(models.Model):
 
     customer = models.ForeignKey(
         Customer, on_delete=models.SET_NULL, null=True)
-    address = models.ForeignKey(Address, on_delete=models.PROTECT, null=True)
+    address = models.CharField(max_length=255, null=True)
     payment_status = models.CharField(
         max_length=1, choices=PAYMENT_STATUS_OPTIONS, default=PAYMENT_STATUS_PENDING)
     created_at = models.DateTimeField(auto_now_add=True)

@@ -112,9 +112,25 @@ class UpdateCartItemSerializer(serializers.ModelSerializer):
 
 class AddressSerializer(serializers.ModelSerializer):
 
+    def update(self, instance, validated_data):
+        # Check if default address already exists for the customer,
+        # if so, set previous default address as normal one
+        customer = Customer.objects.get(user_id=self.context['user_id'])
+        if validated_data.get('is_default', False):
+            customer.addresses.filter(is_default=True).update(is_default=False)
+        # Update target address
+        instance.street = validated_data.get('street', instance.street)
+        instance.city = validated_data.get('city', instance.city)
+        instance.zip = validated_data.get('zip', instance.zip)
+        instance.is_default = validated_data.get(
+            'is_default', instance.is_default)
+        instance.save()
+
+        return instance
+
     class Meta:
         model = Address
-        fields = ['id', 'street', 'city', 'zip']
+        fields = ['id', 'street', 'city', 'zip', 'is_default']
 
 
 class CustomerDetailsSerialzier(serializers.ModelSerializer):
@@ -161,47 +177,6 @@ class UpdateCustomerSerializer(serializers.ModelSerializer):
                 customer=customer, **customer_details)
             return customer
 
-    # def update(self, instance, validated_data):
-    #     customer_details_data = validated_data.get('customer_details')
-    #     with atomic():
-    #         instance.first_name = validated_data.get(
-    #             'first_name', instance.first_name)
-    #         instance.last_name = validated_data.get(
-    #             'last_name', instance.last_name)
-    #         instance.membership = validated_data.get(
-    #             'membership', instance.membership)
-    #         address_data = validated_data.get('address')
-    #         if address_data:
-    #             street = address_data.get('street', None)
-    #             city = address_data.get('city', None)
-    #             zip = address_data.get('zip', None)
-    #             (address, created) = Address.objects.get_or_create(
-    #                 street=street, city=city, zip=zip)
-    #             instance.addresses.add(address)
-    #         instance.save()
-    #         if customer_details_data:
-    #             try:
-    #                 customer_details = instance.customer_details
-    #                 customer_details.email = customer_details_data.get(
-    #                     'email', customer_details.email)
-    #                 customer_details.phone = customer_details_data.get(
-    #                     'phone', customer_details.phone)
-    #                 customer_details.birth_date = customer_details_data.get(
-    #                     'birth_date', customer_details.birth_date)
-    #                 customer_details.save()
-    #             except:
-    #                 new_email = customer_details_data.get(
-    #                     'email', customer_details.email)
-    #                 new_phone = customer_details_data.get(
-    #                     'phone', customer_details.phone)
-    #                 new_birth_date = customer_details_data.get(
-    #                     'birth_date', customer_details.birth_date)
-    #                 details = CustomerDetails.objects.create(
-    #                     email=new_email, phone=new_phone, birth_date=new_birth_date)
-    #                 instance.customer_details = details
-    #                 instance.save()
-    #     return instance
-
     def update(self, instance, validated_data):
         customer_details_data = validated_data.get('customer_details')
 
@@ -217,13 +192,16 @@ class UpdateCustomerSerializer(serializers.ModelSerializer):
             if address_data:
                 street = address_data.get('street', None)
                 city = address_data.get('city', None)
-                # 避免与 Python 内置的 `zip` 冲突
                 zip_code = address_data.get('zip', None)
-                address, created = Address.objects.get_or_create(
-                    street=street, city=city, zip=zip_code
+                is_default = address_data.get('is_default', False)
+                # Unselect previous default default address
+                if is_default:
+                    instance.addresses.filter(is_default=True).update(is_default=False)
+
+                (address, created) = Address.objects.get_or_create(
+                    street=street, city=city, zip=zip_code, is_default=is_default
                 )
                 instance.addresses.add(address)
-
             instance.save()
 
             if customer_details_data:
@@ -245,7 +223,6 @@ class UpdateCustomerSerializer(serializers.ModelSerializer):
                         email=new_email, phone=new_phone, birth_date=new_birth_date, customer=instance
                     )
                     instance.save()
-
         return instance
 
 
@@ -282,7 +259,7 @@ class OrderSerializer(serializers.ModelSerializer):
     class Meta:
         model = Order
         fields = ['id', 'customer', 'created_at',
-                  'payment_status', 'items', 'total_price']
+                  'payment_status', 'items', 'total_price', 'address']
 
 
 class CreateOrderSerializer(serializers.Serializer):
@@ -314,8 +291,10 @@ class CreateOrderSerializer(serializers.Serializer):
                 'product').filter(cart_id=cart_id)
             customer = Customer.objects.get(user_id=user_id)
             address = customer.addresses.get(id=address_id)
+            address_str = f'{address.street}, {address.city} {address.zip}'
+            print(address_str)
 
-            order = Order.objects.create(customer=customer, address=address)
+            order = Order.objects.create(customer=customer, address=address_str)
 
             order_items = [OrderItem(order=order, product_title=item.product.title,
                                      unit_price=item.product.unit_price, quantity=item.quantity) for item in cart_items]
