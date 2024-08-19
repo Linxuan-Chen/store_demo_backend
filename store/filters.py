@@ -25,8 +25,10 @@ class ProductFilter(FilterSet):
         field_name='title', lookup_expr='icontains', label='title')
     description = django_filters.CharFilter(
         field_name='description', lookup_expr='icontains', label='description')
+    collection = django_filters.CharFilter(
+        field_name='collection__title', lookup_expr='icontains', label='collection')
 
     class Meta:
         model = Product
-        fields = ['title', 'description']
+        fields = ['title', 'description', 'collection']
 

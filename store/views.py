@@ -1,6 +1,7 @@
 from typing import Any
 from django.shortcuts import get_object_or_404, get_list_or_404
 from django.db.models.query import QuerySet
+from rest_framework.exceptions import ValidationError
 from rest_framework import status
 from rest_framework.request import Request
 from rest_framework.response import Response
@@ -17,7 +18,7 @@ from .models import Collection, Product, Cart, CartItem, Customer, Order, Addres
 from .serializers import CollectionRetrieveSerializer, \
     CollectionModifySerializer, ProductSerializer, CartSerializer, CartItemSerializer, \
     AddCartItemSerializer, UpdateCartItemSerializer, CustomerSerializer, UpdateCustomerSerializer, \
-    OrderSerializer, CreateOrderSerializer, UpdateOrderSerializer, AddressSerializer
+    OrderSerializer, CreateOrderSerializer, UpdateOrderSerializer, AddressSerializer, SimpleProductSerializer
 
 
 class CollectionViewSet(ModelViewSet):
@@ -40,6 +41,15 @@ class ProductViewSet(ModelViewSet):
     filter_backends = [DjangoFilterBackend]
     filterset_class = ProductFilter
     permission_classes = [IsAdminOrAuthenticated]
+
+    @action(detail=False, methods=['get'])
+    def suggestions(self, request: Request, *args, **kwargs):
+        if request.query_params and request.query_params.get('keyword'):
+            keyword = request.query_params['keyword']
+            products = Product.objects.filter(
+                title__icontains=keyword).values('title').distinct()[0:5]
+            return Response([product['title'] for product in products])
+        return Response(ValidationError('please provide keyword'), status=status.HTTP_404_NOT_FOUND)
 
 
 class CartViewSet(CreateModelMixin, RetrieveModelMixin, DestroyModelMixin, GenericViewSet):

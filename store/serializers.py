@@ -12,7 +12,6 @@ class SimpleProductSerializer(serializers.ModelSerializer):
         model = Product
         fields = ['id', 'title', 'inventory', 'unit_price']
 
-
 class CollectionRetrieveSerializer(serializers.ModelSerializer):
     """A serializer to retrieve collection data
 
