@@ -14,11 +14,11 @@ from django_filters.rest_framework import DjangoFilterBackend
 from .filters import CollectionFilter, ProductFilter
 from .paginations import ProductPagination, OrderPagination
 from .permissions import IsAdminOrAuthenticated
-from .models import Collection, Product, Cart, CartItem, Customer, Order, Address
+from .models import Collection, Product, Cart, CartItem, Customer, Order, Address, ProductImage
 from .serializers import CollectionRetrieveSerializer, \
     CollectionModifySerializer, ProductSerializer, CartSerializer, CartItemSerializer, \
     AddCartItemSerializer, UpdateCartItemSerializer, CustomerSerializer, UpdateCustomerSerializer, \
-    OrderSerializer, CreateOrderSerializer, UpdateOrderSerializer, AddressSerializer, SimpleProductSerializer
+    OrderSerializer, CreateOrderSerializer, UpdateOrderSerializer, AddressSerializer, ProductImageSerializer
 
 
 class CollectionViewSet(ModelViewSet):
@@ -50,6 +50,19 @@ class ProductViewSet(ModelViewSet):
                 title__icontains=keyword).values('title').distinct()[0:5]
             return Response([product['title'] for product in products])
         return Response(ValidationError('please provide keyword'), status=status.HTTP_404_NOT_FOUND)
+    
+
+class ProductImageViewSet(ModelViewSet):
+    queryset = ProductImage.objects.all()
+    serializer_class = ProductImageSerializer
+
+    def get_queryset(self) -> QuerySet:
+        if self.kwargs['product_pk']:
+            return super().get_queryset().filter(product_id=self.kwargs['product_pk'])
+        return super().get_queryset()
+    
+    def get_serializer_context(self) -> dict[str, Any]:
+        return { 'product_id': self.kwargs['product_pk'] }
 
 
 class CartViewSet(CreateModelMixin, RetrieveModelMixin, DestroyModelMixin, GenericViewSet):

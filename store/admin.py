@@ -69,6 +69,16 @@ class ProductInventoryLevelFilter(admin.SimpleListFilter):
             return queryset.filter(inventory__gt=INVENTORY_TO_LEVEL_MAPPING['high'])
 
 
+class ProductImageInline(admin.TabularInline):
+    model = models.ProductImage
+    readonly_fields = ['thumbnail']
+
+    def thumbnail(self, instance):
+        if instance.image.name != '':
+            return format_html(f'<img src="{instance.image.url}" class="thumbnail" />')
+        return ''
+
+
 @admin.register(models.Product)
 class ProductAdmin(admin.ModelAdmin):
     """Custom admin configuration for Product model
@@ -83,9 +93,15 @@ class ProductAdmin(admin.ModelAdmin):
     list_per_page = 10
     list_filter = [ProductInventoryLevelFilter]
     prepopulated_fields = {'slug': ('title',)}
+    inlines = [ProductImageInline]
 
     def collection_title(self, product: models.Product):
         return product.collection.title if product.collection else ''
+
+    class Media:
+        css = {
+            'all': ['admin_styles/styles.css']
+        }
 
 
 @admin.register(models.Address)
@@ -149,7 +165,7 @@ class CustomerDetailsAdmin(admin.ModelAdmin):
 @admin.register(models.Order)
 class OrderAdmin(admin.ModelAdmin):
     """Custom admin configs for order model
-    
+
         Order items column displays total items associated with the order
         Can redirect to order items details change list page by clicking the amount of order items
     """

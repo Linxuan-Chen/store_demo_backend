@@ -52,6 +52,15 @@ class Product(models.Model):
         ordering = ['title']
 
 
+class ProductImage(models.Model):
+    product = models.ForeignKey(
+        Product, on_delete=models.CASCADE, related_name='images')
+    image = models.ImageField(upload_to='product/')
+
+    def __str__(self) -> str:
+        return str(self.image)
+    
+
 class Address(models.Model):
     street = models.CharField(max_length=255, null=True)
     city = models.CharField(max_length=255, null=True)

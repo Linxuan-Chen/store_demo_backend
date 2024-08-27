@@ -14,8 +14,11 @@ router.register('addresses', views.AddressViewSet, basename='addresses')
 
 router_cart_items = NestedDefaultRouter(router, 'cart', lookup='cart')
 router_cart_items.register('items', views.CartItemViewSet, basename='items')
+router_product_image = NestedDefaultRouter(router, 'products', lookup='product')
+router_product_image.register('images', views.ProductImageViewSet)
 
 urlpatterns = [
     path('', include(router.urls)),
     path('', include(router_cart_items.urls)),
+    path('', include(router_product_image.urls)),
 ]
