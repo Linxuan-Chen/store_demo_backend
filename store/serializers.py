@@ -5,13 +5,24 @@ from .models import Product, Collection, Cart, CartItem, Customer, CustomerDetai
     ProductImage
 
 
+class ProductImageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProductImage
+        fields = ['id', 'image']
+
+    def create(self, validated_data):
+        product_id = self.context['product_id']
+        return ProductImage.objects.create(product_id=product_id, **validated_data)
+
+
 class SimpleProductSerializer(serializers.ModelSerializer):
     """A simple product serializer
         The serializer only displays basic meta data of a product
     """
+    images = ProductImageSerializer(many=True, read_only=True)
     class Meta:
         model = Product
-        fields = ['id', 'title', 'inventory', 'unit_price', 'slug']
+        fields = ['id', 'title', 'inventory', 'unit_price', 'slug', 'images']
 
 
 class CollectionRetrieveSerializer(serializers.ModelSerializer):
@@ -40,20 +51,12 @@ class CollectionModifySerializer(serializers.ModelSerializer):
 
 
 class ProductSerializer(serializers.ModelSerializer):
+    images = ProductImageSerializer(many=True, read_only=True)
+
     class Meta:
         model = Product
         fields = ['id', 'collection', 'title', 'slug',
                   'description', 'inventory', 'promotions', 'unit_price', 'images']
-
-
-class ProductImageSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = ProductImage
-        fields = ['id', 'image']
-
-    def create(self, validated_data):
-        product_id = self.context['product_id']
-        return ProductImage.objects.create(product_id=product_id, **validated_data)
 
 
 class AddCartItemSerializer(serializers.ModelSerializer):
@@ -247,10 +250,17 @@ class UpdateCustomerSerializer(serializers.ModelSerializer):
 
 
 class SimpleOrderItemSerializer(serializers.ModelSerializer):
+    image = serializers.SerializerMethodField(method_name='get_image_url')
 
+    def get_image_url(self, instance):
+        if instance.image:
+            image_id = instance.image.pk
+            product_image = ProductImage.objects.get(pk=image_id)
+            return ProductImageSerializer(product_image).data
+        return ''
     class Meta:
         model = OrderItem
-        fields = ['id', 'product_title', 'quantity', 'unit_price']
+        fields = ['id', 'product_title', 'quantity', 'unit_price', 'image']
 
 
 class OrderSerializer(serializers.ModelSerializer):
@@ -318,7 +328,7 @@ class CreateOrderSerializer(serializers.Serializer):
                 customer=customer, address=address_str)
 
             order_items = [OrderItem(order=order, product_title=item.product.title,
-                                     unit_price=item.product.unit_price, quantity=item.quantity) for item in cart_items]
+                                     unit_price=item.product.unit_price, quantity=item.quantity, image=item.product.images.first()) for item in cart_items]
             OrderItem.objects.bulk_create(order_items)
             [item.delete() for item in cart_items]
         return order

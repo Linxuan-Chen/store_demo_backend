@@ -40,6 +40,9 @@ class Product(models.Model):
         max_digits=6, decimal_places=2, validators=[MinValueValidator(Decimal('0'))], null=False, blank=False)
     last_updated = models.DateTimeField(auto_now=True)
 
+    # Type annotations
+    images: Manager['ProductImage']
+
     def save(self, *args, **kwargs) -> None:
         if self.title:
             self.slug = slugify(self.title)
@@ -59,7 +62,7 @@ class ProductImage(models.Model):
 
     def __str__(self) -> str:
         return str(self.image)
-    
+
 
 class Address(models.Model):
     street = models.CharField(max_length=255, null=True)
@@ -163,6 +166,7 @@ class OrderItem(models.Model):
     product_title = models.CharField(max_length=255)
     unit_price = models.DecimalField(max_digits=6, decimal_places=2)
     quantity = models.IntegerField()
+    image = models.ForeignKey(ProductImage, on_delete=models.SET_NULL, default=None, null=True, blank=True)
 
 
 class CartItem(models.Model):
