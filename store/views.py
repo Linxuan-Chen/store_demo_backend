@@ -142,9 +142,22 @@ class CustomerView(RetrieveModelMixin, CreateModelMixin, UpdateModelMixin, Destr
             return [AllowAny()]
         return [IsAuthenticated()]
 
+    def update(self, request: Request, *args: Any, **kwargs: Any) -> Response:
+        partial = kwargs.pop('partial', False)
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        result = serializer.save()
+
+        customer_data = self.get_serializer(result.get('customer')).data
+        address_data = result.get('new_address')
+
+        customer_data['address'] = address_data
+
+        return Response(customer_data)
 
 class OrderViewSet(ModelViewSet):
-    queryset = Order.objects.prefetch_related('orderitem_set').all()
+    queryset = Order.objects.prefetch_related('orderitem_set').order_by('-created_at').all()
     http_method_names = ['get', 'post', 'patch', 'delete', 'head', 'options']
     pagination_class = OrderPagination
 
@@ -161,7 +174,7 @@ class OrderViewSet(ModelViewSet):
             return super().get_queryset()
         else:
             customer = Customer.objects.get(user_id=self.request.user.pk)
-            return Order.objects.filter(customer_id=customer.pk)
+            return super().get_queryset().filter(customer_id=customer.pk).order_by('-created_at')
 
     def get_permissions(self):
         method = self.request.method
@@ -185,7 +198,7 @@ class AddressViewSet(ModelViewSet):
 
     def get_queryset(self) -> QuerySet:
         customer = get_object_or_404(Customer, user_id=self.request.user.pk)
-        addresses = Address.objects.all().filter(customer=customer)
+        addresses = Address.objects.all().filter(customer=customer).order_by('-is_default')
         return addresses
 
     def get_serializer_context(self) -> dict[str, Any]:

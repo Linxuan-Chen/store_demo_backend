@@ -10,7 +10,8 @@ class SimpleProductSerializer(serializers.ModelSerializer):
     """
     class Meta:
         model = Product
-        fields = ['id', 'title', 'inventory', 'unit_price']
+        fields = ['id', 'title', 'inventory', 'unit_price', 'slug']
+
 
 class CollectionRetrieveSerializer(serializers.ModelSerializer):
     """A serializer to retrieve collection data
@@ -26,7 +27,7 @@ class CollectionRetrieveSerializer(serializers.ModelSerializer):
         fields = ['id', 'title', 'featured_products']
 
     def get_featured_products(self, collection):
-        products = collection.featured_product
+        products = Product.objects.filter(collection=collection)[0:4]
         return SimpleProductSerializer(products, many=True).data
 
 
@@ -66,7 +67,7 @@ class AddCartItemSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = CartItem
-        fields = ['product_id', 'quantity']
+        fields = ['id', 'product_id', 'quantity']
 
 
 class CartItemSerializer(serializers.ModelSerializer):
@@ -159,7 +160,7 @@ class UpdateCustomerSerializer(serializers.ModelSerializer):
         allow_null=True, required=False)
     id = serializers.IntegerField(read_only=True)
     address = AddressSerializer(
-        write_only=True, allow_null=True, required=False)
+        allow_null=True, required=False)
 
     class Meta:
         model = Customer
@@ -195,12 +196,18 @@ class UpdateCustomerSerializer(serializers.ModelSerializer):
                 is_default = address_data.get('is_default', False)
                 # Unselect previous default default address
                 if is_default:
-                    instance.addresses.filter(is_default=True).update(is_default=False)
+                    instance.addresses.filter(
+                        is_default=True).update(is_default=False)
 
                 (address, created) = Address.objects.get_or_create(
                     street=street, city=city, zip=zip_code, is_default=is_default
                 )
+
                 instance.addresses.add(address)
+                if created:
+                    new_address_info = AddressSerializer(address).data
+                else:
+                    new_address_info = None
             instance.save()
 
             if customer_details_data:
@@ -222,7 +229,10 @@ class UpdateCustomerSerializer(serializers.ModelSerializer):
                         email=new_email, phone=new_phone, birth_date=new_birth_date, customer=instance
                     )
                     instance.save()
-        return instance
+        return {
+            'customer': instance,
+            'new_address': new_address_info
+        }
 
 
 class SimpleOrderItemSerializer(serializers.ModelSerializer):
@@ -293,7 +303,8 @@ class CreateOrderSerializer(serializers.Serializer):
             address_str = f'{address.street}, {address.city} {address.zip}'
             print(address_str)
 
-            order = Order.objects.create(customer=customer, address=address_str)
+            order = Order.objects.create(
+                customer=customer, address=address_str)
 
             order_items = [OrderItem(order=order, product_title=item.product.title,
                                      unit_price=item.product.unit_price, quantity=item.quantity) for item in cart_items]

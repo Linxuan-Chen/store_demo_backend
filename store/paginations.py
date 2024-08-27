@@ -10,7 +10,7 @@ class ProductPagination(PageNumberPagination):
 
         example: /api/store/products/?page_size=20&page=2
     """
-    page_size = 10
+    page_size = 12
     page_size_query_param = 'page_size'
     page_query_param = 'page'
     max_page_size = 100
