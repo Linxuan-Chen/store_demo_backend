@@ -1,5 +1,5 @@
 from typing import Any
-from django.shortcuts import get_object_or_404, get_list_or_404
+from django.shortcuts import get_object_or_404
 from django.db.models.query import QuerySet
 from rest_framework.exceptions import ValidationError
 from rest_framework import status
@@ -19,6 +19,7 @@ from .serializers import CollectionRetrieveSerializer, \
     CollectionModifySerializer, ProductSerializer, CartSerializer, CartItemSerializer, \
     AddCartItemSerializer, UpdateCartItemSerializer, CustomerSerializer, UpdateCustomerSerializer, \
     OrderSerializer, CreateOrderSerializer, UpdateOrderSerializer, AddressSerializer, ProductImageSerializer
+from .tasks import notify_customer
 
 
 class CollectionViewSet(ModelViewSet):
@@ -50,7 +51,7 @@ class ProductViewSet(ModelViewSet):
                 title__icontains=keyword).values('title').distinct()[0:5]
             return Response([product['title'] for product in products])
         return Response(ValidationError('please provide keyword'), status=status.HTTP_404_NOT_FOUND)
-    
+
 
 class ProductImageViewSet(ModelViewSet):
     queryset = ProductImage.objects.all()
@@ -60,9 +61,9 @@ class ProductImageViewSet(ModelViewSet):
         if self.kwargs['product_pk']:
             return super().get_queryset().filter(product_id=self.kwargs['product_pk'])
         return super().get_queryset()
-    
+
     def get_serializer_context(self) -> dict[str, Any]:
-        return { 'product_id': self.kwargs['product_pk'] }
+        return {'product_id': self.kwargs['product_pk']}
 
 
 class CartViewSet(CreateModelMixin, RetrieveModelMixin, DestroyModelMixin, GenericViewSet):
@@ -158,7 +159,8 @@ class CustomerView(RetrieveModelMixin, CreateModelMixin, UpdateModelMixin, Destr
     def update(self, request: Request, *args: Any, **kwargs: Any) -> Response:
         partial = kwargs.pop('partial', False)
         instance = self.get_object()
-        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        serializer = self.get_serializer(
+            instance, data=request.data, partial=partial)
         serializer.is_valid(raise_exception=True)
         result = serializer.save()
 
@@ -169,8 +171,10 @@ class CustomerView(RetrieveModelMixin, CreateModelMixin, UpdateModelMixin, Destr
 
         return Response(customer_data)
 
+
 class OrderViewSet(ModelViewSet):
-    queryset = Order.objects.prefetch_related('orderitem_set').order_by('-created_at').all()
+    queryset = Order.objects.prefetch_related(
+        'orderitem_set').order_by('-created_at').all()
     http_method_names = ['get', 'post', 'patch', 'delete', 'head', 'options']
     pagination_class = OrderPagination
 
@@ -180,6 +184,7 @@ class OrderViewSet(ModelViewSet):
         order_serializer.is_valid(raise_exception=True)
         order = order_serializer.save()
         order_serializer = OrderSerializer(order)
+        notify_customer.delay('hi')
         return Response(order_serializer.data)
 
     def get_queryset(self) -> QuerySet:
@@ -211,7 +216,8 @@ class AddressViewSet(ModelViewSet):
 
     def get_queryset(self) -> QuerySet:
         customer = get_object_or_404(Customer, user_id=self.request.user.pk)
-        addresses = Address.objects.all().filter(customer=customer).order_by('-is_default')
+        addresses = Address.objects.all().filter(
+            customer=customer).order_by('-is_default')
         return addresses
 
     def get_serializer_context(self) -> dict[str, Any]:

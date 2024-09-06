@@ -277,8 +277,7 @@ class OrderSerializer(serializers.ModelSerializer):
         return order_items_serializer.data
 
     def get_customer_name(self, order: Order):
-        customer_name = f'{order.customer.first_name if order.customer else ''} {
-            order.customer.last_name if order.customer else ''}'
+        customer_name = f'{order.customer.first_name if order.customer else ""} {order.customer.last_name if order.customer else ""}'
         return customer_name
 
     def get_total_price(self, order: Order):
