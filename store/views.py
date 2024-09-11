@@ -13,7 +13,7 @@ from rest_framework.permissions import IsAuthenticated, IsAdminUser, AllowAny
 from django_filters.rest_framework import DjangoFilterBackend
 from .filters import CollectionFilter, ProductFilter
 from .paginations import ProductPagination, OrderPagination
-from .permissions import IsAdminOrAuthenticated
+from .permissions import IsAdminOrReadOnly
 from .models import Collection, Product, Cart, CartItem, Customer, Order, Address, ProductImage
 from .serializers import CollectionRetrieveSerializer, \
     CollectionModifySerializer, ProductSerializer, CartSerializer, CartItemSerializer, \
@@ -28,6 +28,7 @@ class CollectionViewSet(ModelViewSet):
     http_method_names = ['get', 'delete', 'patch', 'post']
     filter_backends = [DjangoFilterBackend]
     filterset_class = CollectionFilter
+    permission_classes = [IsAdminOrReadOnly]
 
     def get_serializer_class(self) -> type[BaseSerializer]:
         return CollectionRetrieveSerializer if self.request.method == 'GET' else CollectionModifySerializer
@@ -41,7 +42,7 @@ class ProductViewSet(ModelViewSet):
     pagination_class = ProductPagination
     filter_backends = [DjangoFilterBackend]
     filterset_class = ProductFilter
-    permission_classes = [IsAdminOrAuthenticated]
+    permission_classes = [IsAdminOrReadOnly]
 
     @action(detail=False, methods=['get'])
     def suggestions(self, request: Request, *args, **kwargs):
