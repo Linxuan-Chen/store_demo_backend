@@ -66,6 +66,8 @@ flower = "*"
 pytest = "*"
 autopep8 = "*"
 pytest-django = "*"
+pytest--watch = "*"
+locust = "*"
 
 [requires]
 python_version = "3.10"
