@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'djoser',
     'django_filters',
+    'silk',
     'store',
     'account',
 ]
@@ -158,13 +159,14 @@ INTERNAL_IPS = [
 
 TESTING = "test" in sys.argv
 
-if not TESTING:
+if DEBUG:
     INSTALLED_APPS = [
         *INSTALLED_APPS,
         "debug_toolbar",
     ]
     MIDDLEWARE = [
         "debug_toolbar.middleware.DebugToolbarMiddleware",
+        'silk.middleware.SilkyMiddleware',
         *MIDDLEWARE,
     ]
 
