@@ -20,6 +20,7 @@ class SimpleProductSerializer(serializers.ModelSerializer):
         The serializer only displays basic meta data of a product
     """
     images = ProductImageSerializer(many=True, read_only=True)
+
     class Meta:
         model = Product
         fields = ['id', 'title', 'inventory', 'unit_price', 'slug', 'images']
@@ -39,7 +40,7 @@ class CollectionRetrieveSerializer(serializers.ModelSerializer):
         fields = ['id', 'title', 'featured_products']
 
     def get_featured_products(self, collection):
-        products = Product.objects.filter(collection=collection)[0:4]
+        products = collection.featured_product
         return SimpleProductSerializer(products, many=True).data
 
 
@@ -258,6 +259,7 @@ class SimpleOrderItemSerializer(serializers.ModelSerializer):
             product_image = ProductImage.objects.get(pk=image_id)
             return ProductImageSerializer(product_image).data
         return ''
+
     class Meta:
         model = OrderItem
         fields = ['id', 'product_title', 'quantity', 'unit_price', 'image']
