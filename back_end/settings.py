@@ -52,6 +52,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -134,6 +135,7 @@ STATICFILES_DIRS = [
     BASE_DIR / 'static' / 'front_end_bundle' / 'static',
     BASE_DIR / 'static'
 ]
+STATIC_ROOT = BASE_DIR / 'static' / 'back_end_assets'
 
 # Media files
 MEDIA_URL = '/media/'
@@ -209,3 +211,15 @@ SESSION_COOKIE_HTTPONLY = True
 
 # Celery settings
 CELERY_BROKER_URL = 'redis://localhost:6379/1'
+
+# Caching settings
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": "redis://127.0.0.1:6379/2",
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        },
+        "TIMEOUT": 10 * 60
+    }
+}
