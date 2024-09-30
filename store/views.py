@@ -20,10 +20,13 @@ from .serializers import CollectionRetrieveSerializer, \
     AddCartItemSerializer, UpdateCartItemSerializer, CustomerSerializer, UpdateCustomerSerializer, \
     OrderSerializer, CreateOrderSerializer, UpdateOrderSerializer, AddressSerializer, ProductImageSerializer
 from .tasks import notify_customer
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class CollectionViewSet(ModelViewSet):
-    queryset = Collection.objects.select_related('featured_product').all()
+    queryset = Collection.objects.prefetch_related('featured_product').all()
     serializer_class = CollectionRetrieveSerializer
     http_method_names = ['get', 'delete', 'patch', 'post']
     filter_backends = [DjangoFilterBackend]
@@ -93,6 +96,7 @@ class CartItemViewSet(ModelViewSet):
                 count = cart.cartitem_set.count()
                 return Response({'count': count}, status=status.HTTP_200_OK)
             except Cart.DoesNotExist:
+                logger.error('Cart not found')
                 return Response("Cart not found", status=status.HTTP_404_NOT_FOUND)
         else:
             return Response("no data", status=status.HTTP_404_NOT_FOUND)

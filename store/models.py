@@ -14,8 +14,8 @@ class Collection(models.Model):
         featured_product: List<Product> products that belong to the collection
     """
     title = models.CharField(max_length=255)
-    featured_product = models.ForeignKey(
-        'Product', on_delete=models.SET_NULL, null=True, related_name='+')
+    featured_product = models.ManyToManyField(
+        'Product', related_name='+')
 
     def __str__(self):
         return self.title
@@ -166,7 +166,8 @@ class OrderItem(models.Model):
     product_title = models.CharField(max_length=255)
     unit_price = models.DecimalField(max_digits=6, decimal_places=2)
     quantity = models.IntegerField()
-    image = models.ForeignKey(ProductImage, on_delete=models.SET_NULL, default=None, null=True, blank=True)
+    image = models.ForeignKey(
+        ProductImage, on_delete=models.SET_NULL, default=None, null=True, blank=True)
 
 
 class CartItem(models.Model):

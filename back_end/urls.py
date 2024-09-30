@@ -6,7 +6,7 @@ Examples:
 """
 from django.contrib import admin
 from django.urls import path, include
-from . import settings
+from .settings import common, dev
 from django.views.generic import TemplateView
 from django.conf.urls.static import static
 
@@ -24,13 +24,13 @@ urlpatterns = [
     path('', TemplateView.as_view(template_name='index.html')),
 ]
 
-if not settings.TESTING:
+if not common.TESTING:
     urlpatterns = [
         *urlpatterns,
         path("__debug__/", include("debug_toolbar.urls")),
     ]
 
-if settings.DEBUG:
-    urlpatterns += static(settings.MEDIA_URL,
-                          document_root=settings.MEDIA_ROOT)
+if dev.DEBUG:
+    urlpatterns += static(common.MEDIA_URL,
+                          document_root=common.MEDIA_ROOT)
     urlpatterns += [path('silk/', include('silk.urls', namespace='silk'))]
