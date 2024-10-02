@@ -1,3 +1,5 @@
 venv/
 /static/
 general.log
+*.pem
+*.pem:Zone.Identifier
