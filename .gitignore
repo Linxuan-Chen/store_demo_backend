@@ -3,3 +3,4 @@ venv/
 general.log
 *.pem
 *.pem:Zone.Identifier
+.env

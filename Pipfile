@@ -65,6 +65,9 @@ django-redis = "*"
 whitenoise = "*"
 gunicorn = "*"
 supervisor = "*"
+python-dotenv = "*"
+boto3 = "*"
+django-storages = "*"
 
 [dev-packages]
 pytest = "*"
