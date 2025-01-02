@@ -193,6 +193,7 @@ class UpdateCustomerSerializer(serializers.ModelSerializer):
             return customer
 
     def update(self, instance, validated_data):
+        new_address_info = None 
         customer_details_data = validated_data.get('customer_details')
 
         with atomic():
