@@ -72,6 +72,8 @@ class ProductInventoryLevelFilter(admin.SimpleListFilter):
 class ProductImageInline(admin.TabularInline):
     model = models.ProductImage
     readonly_fields = ['thumbnail']
+    fields = ['image', 'thumbnail']
+    extra = 1
 
     def thumbnail(self, instance):
         if instance.image.name != '':
