@@ -26,7 +26,7 @@ RUN pip3 install --no-cache-dir -r requirements.txt
 
 COPY --chown=demostore:demostore . .
 
-ENV DJANGO_SETTINGS_MODULE=myproject.settings_prod
+ENV DJANGO_SETTINGS_MODULE=back_end.settings_prod
 
 CMD ["gunicorn", "back_end.wsgi"]
 
