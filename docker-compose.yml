@@ -1,23 +1,71 @@
-version: '4.33.1'
-
 services:
   web:
-    image: your_django_image
-    networks:
-      - mynetwork
+    build:
+      context: .
+    container_name: demo_store_backend
+    volumes: 
+      - .:/app
+    ports:
+      - 8000:8000
     environment:
+      - DEBUG=1
+      - DJANGO_SETTINGS_MODULE=back_end.settings.dev
+      - EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend
       - EMAIL_HOST=smtp4dev
       - EMAIL_PORT=25
-      - EMAIL_USE_TLS=False
+      - EMAIL_HOST_USER= 
+      - EMAIL_HOST_PASSWORD= 
+      - EMAIL_USE_TLS=False 
       - EMAIL_USE_SSL=False
+    depends_on:
+      - smtp4dev
+      - celery
+      - redis
+    command: python manage.py runserver 0.0.0.0:8000
+
+  redis:
+    image: redis:8.0-M02-alpine3.21
+    container_name: redis
+    ports:
+      - 6379:6379
+    restart:
+      always
+    volumes:
+      - redisdata:/data
+
+  celery:
+    build: .
+    depends_on:
+      - redis
+    command: python -m celery -A back_end.celery worker 
+    volumes:
+      - .:/app
+
+  celery-beat:
+    build: .
+    command: python -m celery -A back_end.celery beat --loglevel=info
+    depends_on:
+      - redis
+    volumes:
+      - .:/app
+      
+  flower:
+    build: .
+    command: python -m celery -A back_end.celery flower
+    depends_on:
+      - web
+      - redis
+      - celery
+    environment:
+      - DEBUG=1
+    ports:
+      - 5555:5555
 
   smtp4dev:
     image: rnwood/smtp4dev
-    networks:
-      - mynetwork
+    container_name: smtp4dev
     ports:
-      - "25:25"
-      - "8080:8080"
-
-networks:
-  mynetwork:
+      - "25:25" # smtp
+      - "5000:5000" # web ui
+volumes:
+  redisdata:
