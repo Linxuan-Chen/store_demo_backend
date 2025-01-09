@@ -54,6 +54,8 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = 'back_end.urls'
 
+SECRET_KEY = 'django-insecure-mtfnjr^5hhd_lvcgtk3(m&&=!tbhqm1=j!rwmbi8wx_)0xu$&u'
+
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
@@ -170,21 +172,6 @@ CSRF_COOKIE_SECURE = True
 SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_HTTPONLY = True
 SESSION_COOKIE_HTTPONLY = True
-
-# Celery settings
-CELERY_BROKER_URL = 'redis://localhost:6379/1'
-
-# Caching settings
-CACHES = {
-    "default": {
-        "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": "redis://127.0.0.1:6379/2",
-        "OPTIONS": {
-            "CLIENT_CLASS": "django_redis.client.DefaultClient",
-        },
-        "TIMEOUT": 10 * 60
-    }
-}
 
 # Logger settings
 LOGGING = {

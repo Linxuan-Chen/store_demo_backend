@@ -7,8 +7,6 @@ load_dotenv()
 
 DEBUG = False
 
-SECRET_KEY = os.environ.get('SECRET_KEY')
-
 ALLOWED_HOSTS: List = []
 
 # Database settings
@@ -47,6 +45,16 @@ STORAGES = {
 
 # Media URL for S3
 MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/media/'
+
+# SMTP settings
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+
+EMAIL_HOST = 'smtp.gmail.com'  
+EMAIL_PORT = 587  
+EMAIL_USE_TLS = True 
+EMAIL_HOST_USER = 'linxuanchen2017@gmail.com'  # Gmail 地址
+EMAIL_HOST_PASSWORD = 'your-gmail-password'  # Gmail 密码 (如果启用两步验证，使用应用专用密码)
+DEFAULT_FROM_EMAIL = 'your-gmail-address@gmail.com'  # 默认发件人邮箱
 
 INSTALLED_APPS = [
     *INSTALLED_APPS,

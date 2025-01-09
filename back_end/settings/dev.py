@@ -5,8 +5,6 @@ load_dotenv()
 
 DEBUG = True
 
-SECRET_KEY = 'django-insecure-mtfnjr^5hhd_lvcgtk3(m&&=!tbhqm1=j!rwmbi8wx_)0xu$&u'
-
 # Database
 
 DATABASES = {
@@ -15,7 +13,7 @@ DATABASES = {
         'NAME': 'demo_store',
         'USER': os.environ.get('RDS_DATABASE_USER'),
         'PASSWORD': os.environ.get('RDS_DATABASE_PASSWORD'),
-        'HOST': '127.0.0.1',
+        'HOST': 'host.docker.internal',
         'PORT': '3307',
     }
 }
@@ -23,6 +21,28 @@ DATABASES = {
 # Media files
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media/'
+
+CELERY_BROKER_URL = 'redis://redis:6379/1'
+
+CACHES = {
+    'default': {
+        'BACKEND': 'django_redis.cache.RedisCache',
+        'LOCATION': 'redis://redis:6379/2',
+        'TIMEOUT': 10 * 60,
+        'OPTIONS': {
+            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+        }
+    }
+}
+
+EMAIL_HOST = 'smtp4dev'
+EMAIL_HOST_USER = ''
+EMAIL_HOST_PASSWORD = ''
+EMAIL_PORT = 2525
+
+DEBUG_TOOLBAR_CONFIG = {
+    'SHOW_TOOLBAR_CALLBACK': lambda request: True
+}
 
 # supervisor settings
 INSTALLED_APPS = [
