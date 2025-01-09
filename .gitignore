@@ -4,3 +4,6 @@ general.log
 *.pem
 *.pem:Zone.Identifier
 .env
+celerybeat-schedule
+*.pyc
+__pycache__/
