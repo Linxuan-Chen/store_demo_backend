@@ -34,7 +34,7 @@ drf-nested-routers==0.94.1
 flower==2.0.1
 gprof2dot==2024.6.6
 gunicorn==23.0.0
-humanize==4.10.0
+humanize==4.11.0
 idna==3.8
 jmespath==1.0.1
 kombu==5.4.0
