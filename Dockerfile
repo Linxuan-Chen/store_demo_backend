@@ -28,6 +28,8 @@ ENV PATH="/home/demostore/.local/bin:$PATH"
 
 ENV DJANGO_SETTINGS_MODULE=back_end.settings.prod
 
+RUN python manage.py collectstatic --noinput
+
 CMD ["gunicorn", "--bind", "0.0.0.0:8000", "back_end.wsgi"]
 
 EXPOSE 8000
