@@ -5,6 +5,7 @@ Examples:
 
 """
 from django.contrib import admin
+from django.conf import settings
 from django.urls import path, include
 from .settings import common, dev, prod
 from django.views.generic import TemplateView
@@ -28,8 +29,7 @@ if not common.TESTING:
         *urlpatterns,
         path("__debug__/", include("debug_toolbar.urls")),
     ]
-print(dev.DEBUG)
-if dev.DEBUG:
+if settings.DEBUG:
     urlpatterns += static(dev.MEDIA_URL,
                           document_root=dev.MEDIA_ROOT)
     urlpatterns += [path('silk/', include('silk.urls', namespace='silk'))]
