@@ -35,7 +35,6 @@ INSTALLED_APPS = [
     'rest_framework',
     'djoser',
     'django_filters',
-    'silk',
     'store',
     'account',
 ]
@@ -111,7 +110,6 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [
-    BASE_DIR / 'static' / 'front_end_bundle' / 'static',
     BASE_DIR / 'static'
 ]
 STATIC_ROOT = BASE_DIR / 'static' / 'back_end_assets'

@@ -7,6 +7,8 @@ DEBUG = True
 
 # Database
 
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'backend']
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
@@ -47,6 +49,7 @@ DEBUG_TOOLBAR_CONFIG = {
 # supervisor settings
 INSTALLED_APPS = [
     *INSTALLED_APPS,
+    "silk",
     "storages",
     "debug_toolbar",
 ]

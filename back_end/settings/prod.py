@@ -7,7 +7,7 @@ load_dotenv()
 
 DEBUG = False
 
-ALLOWED_HOSTS: List = []
+ALLOWED_HOSTS: List = ['*']
 
 # Database settings
 
