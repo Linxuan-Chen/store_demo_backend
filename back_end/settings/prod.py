@@ -7,9 +7,23 @@ load_dotenv()
 
 DEBUG = False
 
-ALLOWED_HOSTS: List = ['*']
+ALLOWED_HOSTS: List = ['15.222.6.77', 'localhost']
+
+CSRF_TRUSTED_ORIGINS = ['http://localhost:3000', 'http://15.222.6.77']
 
 # Database settings
+
+# For dev purpose only
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.mysql',
+#         'NAME': 'demo_store',
+#         'USER': os.environ.get('RDS_DATABASE_USER'),
+#         'PASSWORD': os.environ.get('RDS_DATABASE_PASSWORD'),
+#         'HOST': 'host.docker.internal',
+#         'PORT': '3307',
+#     }
+# }
 
 DATABASES = {
     'default': {

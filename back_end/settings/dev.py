@@ -7,7 +7,9 @@ DEBUG = True
 
 # Database
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'backend']
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'backend', '15.222.6.77']
+
+CSRF_TRUSTED_ORIGINS = ['http://localhost:3000', 'http://15.222.6.77']
 
 DATABASES = {
     'default': {
@@ -23,6 +25,8 @@ DATABASES = {
 # Media files
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media/'
+
+STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.ManifestStaticFilesStorage'
 
 CELERY_BROKER_URL = 'redis://redis:6379/1'
 
