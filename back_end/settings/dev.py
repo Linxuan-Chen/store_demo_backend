@@ -7,9 +7,9 @@ DEBUG = True
 
 # Database
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'backend', '15.222.6.77']
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'backend', '35.183.186.59']
 
-CSRF_TRUSTED_ORIGINS = ['http://localhost:3000', 'http://15.222.6.77']
+CSRF_TRUSTED_ORIGINS = ['http://localhost:3000', 'http://35.183.186.59']
 
 DATABASES = {
     'default': {

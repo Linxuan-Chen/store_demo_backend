@@ -7,9 +7,9 @@ load_dotenv()
 
 DEBUG = False
 
-ALLOWED_HOSTS: List = ['15.222.6.77', 'localhost']
+ALLOWED_HOSTS: List = ['35.183.186.59', 'localhost']
 
-CSRF_TRUSTED_ORIGINS = ['http://localhost:3000', 'http://15.222.6.77']
+CSRF_TRUSTED_ORIGINS = ['http://localhost:3000', 'http://35.183.186.59']
 
 # Database settings
 
