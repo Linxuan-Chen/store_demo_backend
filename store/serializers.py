@@ -160,6 +160,8 @@ class CustomerSerializer(serializers.ModelSerializer):
     customer_details = CustomerDetailsSerialzier()
     user_id = serializers.IntegerField(read_only=True)
     id = serializers.IntegerField(read_only=True)
+    first_name = serializers.CharField(required=False, allow_null=True, allow_blank=True)
+    last_name = serializers.CharField(required=False, allow_null=True, allow_blank=True)
 
     def get_addresses(self, customer: Customer):
         return AddressSerializer(customer.addresses, many=True).data

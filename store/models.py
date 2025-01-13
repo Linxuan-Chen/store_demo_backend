@@ -58,7 +58,7 @@ class Product(models.Model):
 class ProductImage(models.Model):
     product = models.ForeignKey(
         Product, on_delete=models.CASCADE, related_name='images')
-    image = models.ImageField(upload_to='products/')
+    image = models.ImageField(upload_to='media/products/')
 
     def __str__(self) -> str:
         return str(self.image)
@@ -108,8 +108,8 @@ class Customer(models.Model):
         (MEMBERSHIP_GOLD_NAME, 'Gold'),
     ]
 
-    first_name = models.CharField(max_length=255, null=True)
-    last_name = models.CharField(max_length=255, null=True)
+    first_name = models.CharField(max_length=255, null=True, blank=True)
+    last_name = models.CharField(max_length=255, null=True, blank=True)
     membership = models.CharField(
         max_length=1, choices=MEMBERSHIP_OPTIONS, default=MEMBERSHIP_BRONZE_NAME)
 
