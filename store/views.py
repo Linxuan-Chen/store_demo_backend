@@ -189,7 +189,7 @@ class OrderViewSet(ModelViewSet):
         order_serializer.is_valid(raise_exception=True)
         order = order_serializer.save()
         order_serializer = OrderSerializer(order)
-        notify_customer.delay('hi')
+        notify_customer.delay(request.user.pk)
         return Response(order_serializer.data)
 
     def get_queryset(self) -> QuerySet:
