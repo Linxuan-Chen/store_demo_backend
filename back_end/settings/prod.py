@@ -64,11 +64,24 @@ MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/media/'
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 
 EMAIL_HOST = 'smtp.gmail.com'  
-EMAIL_PORT = 587  
-EMAIL_USE_TLS = True 
-EMAIL_HOST_USER = 'linxuanchen2017@gmail.com'  # Gmail 地址
-EMAIL_HOST_PASSWORD = 'your-gmail-password'  # Gmail 密码 (如果启用两步验证，使用应用专用密码)
-DEFAULT_FROM_EMAIL = 'your-gmail-address@gmail.com'  # 默认发件人邮箱
+EMAIL_PORT = 465  
+EMAIL_USE_SSL = True
+EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', "")
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', "")
+DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', "") 
+
+CELERY_BROKER_URL = 'redis://redis:6379/1'
+
+CACHES = {
+    'default': {
+        'BACKEND': 'django_redis.cache.RedisCache',
+        'LOCATION': 'redis://redis:6379/2',
+        'TIMEOUT': 10 * 60,
+        'OPTIONS': {
+            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+        }
+    }
+}
 
 INSTALLED_APPS = [
     *INSTALLED_APPS,
